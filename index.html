@@ -360,6 +360,11 @@ section{padding:66px 0}
     const renderGalleryByVisualOrder=renderGallery;
     renderGallery=function(rows){const logical=[...rows].sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.id||'').localeCompare(String(b.id||''))),visual=[];for(let start=0;start<logical.length;start+=5){const group=logical.slice(start,start+5),placement=[0,1,3,2,4];placement.forEach(position=>{if(group[position])visual.push({...group[position],sort_order:visual.length+1,_logicalOrder:start+position})})}renderGalleryByVisualOrder(visual);document.querySelectorAll('#galleryGrid figure').forEach((figure,index)=>{figure.dataset.galleryOrder=String(visual[index]._logicalOrder)})};
     openMedia=function(url,video){mediaViewerItems=[...document.querySelectorAll('#galleryGrid figure[data-media]')].sort((a,b)=>Number(a.dataset.galleryOrder)-Number(b.dataset.galleryOrder)).map(item=>({url:item.dataset.media,video:item.dataset.video==='true'}));mediaViewerIndex=Math.max(0,mediaViewerItems.findIndex(item=>item.url===url));const viewer=document.querySelector('#mediaViewer');viewer.classList.add('open');viewer.setAttribute('aria-hidden','false');document.body.classList.add('locked');showMediaViewerItem()};
+    function resetGalleryPosition(){const gallery=document.querySelector('#galleryGrid');if(gallery)gallery.scrollLeft=0}
+    if('scrollRestoration' in history)history.scrollRestoration='manual';
+    window.addEventListener('pageshow',()=>{window.scrollTo(0,0);requestAnimationFrame(()=>{resetGalleryPosition();requestAnimationFrame(resetGalleryPosition)})});
+    const loadLiveBeforeGalleryReset=loadLive;
+    loadLive=async function(){await loadLiveBeforeGalleryReset();resetGalleryPosition();requestAnimationFrame(resetGalleryPosition)};
     loadLive();
   </script>
 </body></html>
