@@ -35,7 +35,7 @@ nav{height:78px;display:flex;align-items:center;justify-content:space-between;ga
 .button:hover{background:var(--wine)}
 .outline{background:transparent;border:1px solid var(--pink);color:var(--wine)}
 .phone-button{filter:blur(4px);opacity:.68}
-.menubtn{display:none;background:transparent;border:1px solid var(--line);padding:10px 12px;font-weight:800}
+.menubtn{display:none;background:transparent;border:0;padding:8px;color:var(--pink);font-size:1.6rem;cursor:pointer}
 .hero{min-height:650px;display:grid;grid-template-columns:1.05fr .95fr}
 .hero-copy{align-self:center;padding:86px max(24px,calc((100vw - 1180px)/2));padding-right:62px}
 .eyebrow{color:var(--pink);font-size:.73rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase}
@@ -229,7 +229,7 @@ section{padding:66px 0}
       .salon-logo{width:44px;height:44px}
       .brand-title strong{font-size:.98rem;white-space:nowrap}
       .brand-title small{font-size:.45rem}
-      .menubtn{padding:8px 9px;font-size:.82rem}
+      .menubtn{font-size:1.4rem;padding:5px}
       .hero-copy{padding:24px 14px 20px}
       .eyebrow{font-size:.64rem;letter-spacing:.14em}
       .hero h1{font-size:clamp(2.75rem,14vw,4rem);margin:8px 0 12px}
@@ -337,37 +337,31 @@ section{padding:66px 0}
     .gallery figure{position:relative;background:#ead8e1}.gallery figure.loading:before{content:"";position:absolute;inset:0;z-index:2;background:linear-gradient(105deg,#e4d0da 20%,#f8eaf0 40%,#e4d0da 60%);background-size:220% 100%;animation:gallerySkeleton 1.25s linear infinite}.gallery figure.loading img,.gallery figure.loading video{opacity:0}body.dark .gallery figure{background:#21161d}body.dark .gallery figure.loading:before{background:linear-gradient(105deg,#21161d 20%,#35222e 40%,#21161d 60%);background-size:220% 100%}@keyframes gallerySkeleton{to{background-position:-220% 0}}
     .media-viewer-nav{position:fixed;z-index:132;top:50%;width:52px;height:52px;border:1px solid #ffffff66;border-radius:50%;display:grid;place-items:center;background:#2b071dcc;color:#fff;font-size:1.35rem;cursor:pointer;transform:translateY(-50%);backdrop-filter:blur(8px)}.media-viewer-nav:hover{background:var(--pink)}.media-viewer-prev{left:22px}.media-viewer-next{right:22px}@media(max-width:600px){.media-viewer-nav{width:42px;height:42px}.media-viewer-prev{left:8px}.media-viewer-next{right:8px}}
 
-    /* --- Enhanced Mobile Layout Adjustments --- */
-    @media (max-width: 820px) {
-      .hero { min-height: 520px; }
-      .social-float { top: 64px; right: 0; border-radius: 0 0 0 15px; }
-      .social-popover { top: 110px; right: 10px; }
-      .menu-preview { padding: 0; background: transparent; border: 0; box-shadow: none; border-radius: 0; }
-      .service-grid { grid-template-columns: 1fr; gap: 12px; }
-      .service-card { padding: 20px 18px; border-radius: 14px; }
-      .review-card { padding: 28px 24px; }
+    /* --- Custom Additions for Mobile Layout & Review Popup --- */
+    .menubtn { border: 0 !important; background: transparent !important; color: var(--pink) !important; font-size: 1.6rem; padding: 5px; }
+    .menubtn i { pointer-events: none; }
+    
+    .review-dialog { width: min(550px, 92%); max-width: 92vw; text-align: center; }
+    .review-dialog .stars { color: #f2b01e; font-size: 1.5rem; margin-bottom: 16px; }
+    .review-dialog p { color: var(--ink); font-size: 1.1rem; line-height: 1.6; margin: 0 0 24px 0; text-align: center; }
+    .review-dialog .review-meta { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .review-dialog .review-meta h3 { font-size: 1.2rem; white-space: normal; }
+    .review-dialog .review-source { justify-self: center; }
+    
+    @media(max-width:820px) {
+      .menu-preview { padding: 0; background: transparent; border: 0; box-shadow: none; border-radius: 0; backdrop-filter: none; }
+      .service-grid { gap: 12px; }
+      .service-card { padding: 18px 20px; border-radius: 14px; flex-direction: row; align-items: center; justify-content: space-between; }
+      .service-card-main { gap: 12px; }
     }
-    @media (max-width: 500px) {
-      .hero { min-height: 460px; }
-      .hero-copy { padding: 30px 16px 20px; }
-      .hero h1 { font-size: clamp(2.5rem, 13vw, 3.5rem); margin: 8px 0 12px; }
-      .hero p { font-size: .9rem; line-height: 1.45; }
-      .actions { gap: 8px; }
-      .actions .button { width: 100%; }
-      .photos-only .gallery figure { flex: 0 0 85vw; height: 240px; border-radius: 16px; }
-      .review-card { padding: 24px 20px; min-height: 260px; }
-      .visit h2 { font-size: 2.2rem; margin-bottom: 16px; }
-      .map { min-height: 280px; }
-      .dialog { padding: 24px 20px; }
-      .dialog h2 { font-size: 1.6rem; }
-      .review-carousel { grid-template-columns: 36px minmax(0,1fr) 36px; gap: 8px; }
-      .carousel-arrow { width: 36px; height: 36px; }
-      .service-card { padding: 18px 16px; }
-      .service-card h3 { font-size: 1.15rem; }
+    @media(max-width:500px) {
+      .service-card h3 { font-size: 1.1rem; }
+      .service-card p { font-size: 0.85rem; }
+      .service-card strong { font-size: 0.95rem; padding: 6px 10px; }
     }
   </style></head><body>
   <div class="announcement">Studio 47 Hair Salon · Las Vegas, Nevada</div>
-  <header><nav class="shell"><a class="brand brand-title" href="#home"><img class="salon-logo" src="data:image/webp;base64,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" alt="" aria-label="Studio 47 Hair Salon logo"><span><strong>Studio 47 Hair Salon</strong><small>Las Vegas, Nevada</small></span></a><button class="menubtn" aria-expanded="false">Menu</button><div class="navlinks"><a href="#home">Home</a><a href="#about">About</a><a href="#gallery">Gallery</a><a href="#services">Services</a><a href="#visit">Visit</a></div></nav><button class="social-float" id="socialFloat" type="button" aria-expanded="false" aria-controls="socialPopover"><i class="fa-solid fa-heart"></i>View our socials</button></header>
+  <header><nav class="shell"><a class="brand brand-title" href="#home"><img class="salon-logo" src="data:image/webp;base64,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" alt="" aria-label="Studio 47 Hair Salon logo"><span><strong>Studio 47 Hair Salon</strong><small>Las Vegas, Nevada</small></span></a><button class="menubtn" aria-expanded="false" aria-label="Open menu"><i class="fa-solid fa-bars"></i></button><div class="navlinks"><a href="#home">Home</a><a href="#about">About</a><a href="#gallery">Gallery</a><a href="#services">Services</a><a href="#visit">Visit</a></div></nav><button class="social-float" id="socialFloat" type="button" aria-expanded="false" aria-controls="socialPopover"><i class="fa-solid fa-heart"></i>View our socials</button></header>
   <main>
     <section class="hero" id="home"><div class="hero-background" id="heroBackground" aria-hidden="true"></div><div class="hero-copy"><div class="eyebrow">Full-service salon · Las Vegas</div><h1>Studio 47 <em>Hair Salon</em></h1><p>Located in Santa Fe Plaza on North Jones Boulevard. Haircuts, color, highlights and styling for the whole family.</p><div class="actions"><button class="button outline phone-button">Call (702) 636-8532</button></div></div></section>
     <section id="gallery" class="photos-only"><div class="shell"><div class="gallery" id="galleryGrid"><figure class="loading" aria-hidden="true"></figure><figure class="loading" aria-hidden="true"></figure><figure class="loading" aria-hidden="true"></figure><figure class="loading" aria-hidden="true"></figure><figure class="loading" aria-hidden="true"></figure><figure class="loading" aria-hidden="true"></figure><figure class="loading" aria-hidden="true"></figure><figure class="loading" aria-hidden="true"></figure></div></div></section>
@@ -377,6 +371,14 @@ section{padding:66px 0}
   </main>
   <footer><div class="shell foot"><strong>Studio 47 Hair Salon</strong><button class="private-info footer-private" type="button">1449 N. Jones Blvd., Las Vegas, NV 89108</button><button class="private-info footer-private" type="button">(702) 636-8532</button><div class="footer-socials" aria-label="Studio 47 social media"><a class="social-link" href="https://www.instagram.com/studio47hair/" target="_blank" rel="noopener noreferrer" aria-label="Studio 47 on Instagram"><i class="fa-brands fa-instagram"></i></a><a class="social-link" href="https://www.facebook.com/p/Studio-47-Hair-Salon-61573021587231/" target="_blank" rel="noopener noreferrer" aria-label="Studio 47 on Facebook"><i class="fa-brands fa-facebook-f"></i></a></div></div></footer><aside class="social-popover" id="socialPopover" aria-hidden="true"><div class="social-popover-head"><div><div class="eyebrow">Follow Studio 47</div><h2>Stay inspired.</h2><p>See recent looks, salon updates, and more.</p></div><button class="social-close" type="button" aria-label="Close social links">×</button></div><div class="social-popover-links"><a href="https://www.instagram.com/studio47hair/" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-instagram"></i><span>Instagram</span><i class="fa-solid fa-arrow-up-right-from-square"></i></a><a href="https://www.facebook.com/p/Studio-47-Hair-Salon-61573021587231/" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook-f"></i><span>Facebook</span><i class="fa-solid fa-arrow-up-right-from-square"></i></a></div></aside>
   <div class="modal" id="reviewModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="modal-title"><div class="dialog"><button class="dialog-close" id="closeReview" type="button" aria-label="Close">×</button><h2 id="modal-title">Write a review</h2><p>Your written review is optional.</p><form class="review-form" id="reviewForm"><input name="author" placeholder="Your name" required maxlength="80"><div class="public-star-picker" role="radiogroup" aria-label="Rating"><input id="public-rating-5" name="rating" type="radio" value="5" checked><label for="public-rating-5" aria-label="5 stars">★</label><input id="public-rating-4" name="rating" type="radio" value="4"><label for="public-rating-4" aria-label="4 stars">★</label><input id="public-rating-3" name="rating" type="radio" value="3"><label for="public-rating-3" aria-label="3 stars">★</label><input id="public-rating-2" name="rating" type="radio" value="2"><label for="public-rating-2" aria-label="2 stars">★</label><input id="public-rating-1" name="rating" type="radio" value="1"><label for="public-rating-1" aria-label="1 star">★</label></div><textarea name="body" rows="4" placeholder="Your review (optional)" maxlength="800"></textarea><button class="button">Submit review</button></form></div></div>
+  
+  <div class="modal" id="reviewViewer" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Review popup">
+    <div class="dialog review-dialog" id="reviewViewerContent"></div>
+    <button class="media-viewer-nav media-viewer-prev" id="reviewViewerPrev" type="button" aria-label="Previous review"><i class="fa-solid fa-chevron-left"></i></button>
+    <button class="media-viewer-nav media-viewer-next" id="reviewViewerNext" type="button" aria-label="Next review"><i class="fa-solid fa-chevron-right"></i></button>
+    <button class="media-viewer-close" id="closeReviewViewer" type="button" aria-label="Close review">×</button>
+  </div>
+
   <div class="media-viewer" id="mediaViewer" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Gallery preview"><button class="media-viewer-close" type="button" aria-label="Close preview">×</button><div id="mediaViewerContent"></div></div>
   <script>
     const db=supabase.createClient('https://wfxuxrvygyzonkflpwoq.supabase.co','sb_publishable_e2h4t8AvCobzftt36UrDbw_NJGq8qlJ');
@@ -401,11 +403,71 @@ section{padding:66px 0}
     const sourceHtml=source=>{const key=String(source||'').toLowerCase();return sourceIcons[key]?`<span class="review-source"><i class="fa-brands ${sourceIcons[key]}"></i>${esc(key[0].toUpperCase()+key.slice(1))}</span>`:''};
     const isGalleryVideo=url=>String(url||'').startsWith('data:video/')||/\.(mp4|webm|mov|m4v)(?:[?#]|$)/i.test(String(url||''));let galleryTimer;function openMedia(url,video){const viewer=document.querySelector('#mediaViewer'),content=document.querySelector('#mediaViewerContent');content.innerHTML=video?`<video src="${esc(url)}" autoplay muted loop playsinline disablepictureinpicture controlslist="nodownload nofullscreen noremoteplayback"></video>`:`<img src="${esc(url)}" alt="Gallery preview">`;viewer.classList.add('open');viewer.setAttribute('aria-hidden','false');document.body.classList.add('locked')}function closeMedia(){const viewer=document.querySelector('#mediaViewer');viewer.classList.remove('open');viewer.setAttribute('aria-hidden','true');viewer.querySelector('#mediaViewerContent').innerHTML='';document.body.classList.remove('locked')}function startGalleryMotion(){clearInterval(galleryTimer);galleryTimer=setInterval(()=>{if(innerWidth>600||document.querySelector('#mediaViewer').classList.contains('open'))return;const track=document.querySelector('#galleryGrid'),items=[...track.querySelectorAll('figure')];if(items.length<2)return;const current=items.reduce((best,item,i)=>Math.abs(item.offsetLeft-track.scrollLeft)<Math.abs(items[best].offsetLeft-track.scrollLeft)?i:best,0),next=(current+1)%items.length;track.scrollTo({left:next?items[next].offsetLeft-18:0,behavior:'smooth'})},3800)}function renderGallery(rows){const grid=document.querySelector('#galleryGrid');grid.innerHTML=rows.length?rows.map(x=>{const video=isGalleryVideo(x.image_url);return `<figure tabindex="0" role="button" aria-label="Enlarge ${video?'video':'photo'}" data-media="${esc(x.image_url)}" data-video="${video}">${video?`<video src="${esc(x.image_url)}" autoplay muted loop playsinline preload="metadata" disablepictureinpicture controlslist="nodownload nofullscreen noremoteplayback"></video>`:`<img src="${esc(x.image_url)}" alt="" loading="lazy">`}</figure>`}).join(''):'<div class="empty">No live gallery items yet.</div>';grid.querySelectorAll('figure').forEach(item=>{item.onclick=()=>openMedia(item.dataset.media,item.dataset.video==='true');item.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();item.click()}}});grid.querySelectorAll('video').forEach(video=>{video.controls=false;video.muted=true;video.loop=true;video.play().catch(()=>{})});startGalleryMotion()}
     function renderServices(rows){document.querySelector('#serviceGrid').innerHTML=rows.length?rows.map((x,index)=>`<article class="service-card"><div class="service-card-main"><span class="service-number">${String(index+1).padStart(2,'0')}</span><div class="service-info"><h3>${esc(x.name)}</h3><p>${esc(x.description)}</p></div></div><strong>$${esc(String(x.price||'').replace(/[$+]/g,''))}</strong></article>`).join(''):'<div class="empty">No live services yet.</div>'}
-    function renderReviews(rows){reviewIndex=0;document.querySelector('#reviewGrid').innerHTML=rows.length?rows.map(x=>`<article class="review-card"><div class="stars" aria-label="${x.rating} stars">${'<i class="fa-solid fa-star"></i>'.repeat(x.rating)}</div>${x.body?`<p>“${esc(x.body)}”</p>`:''}<div class="review-meta"><h3>${esc(x.author)}</h3>${sourceHtml(x.source)}</div></article>`).join(''):'<div class="empty">No live reviews yet.</div>'}
+    
+    let currentReviews=[],currentReviewIndex=0;
+    function renderReviews(rows){
+        currentReviews=rows;
+        reviewIndex=0;
+        const grid=document.querySelector('#reviewGrid');
+        grid.innerHTML=rows.length?rows.map((x,i)=>`<article class="review-card" data-idx="${i}" style="cursor:pointer"><div class="stars" aria-label="${x.rating} stars">${'<i class="fa-solid fa-star"></i>'.repeat(x.rating)}</div>${x.body?`<p>“${esc(x.body)}”</p>`:''}<div class="review-meta"><h3>${esc(x.author)}</h3>${sourceHtml(x.source)}</div></article>`).join(''):'<div class="empty">No live reviews yet.</div>';
+        grid.querySelectorAll('.review-card').forEach(card=>{
+            card.addEventListener('click',()=>openReviewViewer(parseInt(card.dataset.idx)))
+        })
+    }
+    
+    function openReviewViewer(index){
+        currentReviewIndex=index;
+        const review=currentReviews[index];
+        if(!review)return;
+        const content=document.querySelector('#reviewViewerContent');
+        content.innerHTML=`
+            <div class="stars">${'<i class="fa-solid fa-star"></i>'.repeat(review.rating)}</div>
+            <p>${review.body?'“'+esc(review.body)+'”':'<em>No written review provided.</em>'}</p>
+            <div class="review-meta">
+                <h3>${esc(review.author)}</h3>
+                ${sourceHtml(review.source)}
+            </div>
+        `;
+        const viewer=document.querySelector('#reviewViewer');
+        viewer.classList.add('open');
+        viewer.setAttribute('aria-hidden','false');
+        document.body.classList.add('locked');
+    }
+    function closeReviewViewer(){
+        const viewer=document.querySelector('#reviewViewer');
+        viewer.classList.remove('open');
+        viewer.setAttribute('aria-hidden','true');
+        document.body.classList.remove('locked');
+    }
+    function moveReviewViewer(dir){
+        if(!currentReviews.length)return;
+        currentReviewIndex=(currentReviewIndex+dir+currentReviews.length)%currentReviews.length;
+        openReviewViewer(currentReviewIndex);
+    }
+    
     function moveReviews(direction){const track=document.querySelector('#reviewGrid'),cards=[...track.querySelectorAll('.review-card')];if(!cards.length)return;reviewIndex=(reviewIndex+direction+cards.length)%cards.length;cards[reviewIndex].scrollIntoView({behavior:'smooth',block:'nearest',inline:'start'})}
     async function loadLive(){const [content,services,reviews]=await Promise.all([db.from('site_content').select('*').eq('is_live',true),db.from('services').select('*').eq('is_live',true).order('sort_order'),db.from('reviews').select('*').eq('is_live',true).order('created_at',{ascending:false})]);if(!content.error)renderGallery(content.data.filter(x=>x.section==='gallery'));if(!services.error)renderServices(services.data);if(!reviews.error)renderReviews(reviews.data)}
     function openReview(){modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.classList.add('locked');modal.querySelector('input').focus()}function shut(){modal.classList.remove('open');modal.setAttribute('aria-hidden','true');document.body.classList.remove('locked')}
-    document.querySelector('#openReview').addEventListener('click',openReview);close.addEventListener('click',shut);modal.addEventListener('click',e=>{if(e.target===modal)shut()});const mediaViewer=document.querySelector('#mediaViewer');mediaViewer.querySelector('.media-viewer-close').addEventListener('click',closeMedia);mediaViewer.addEventListener('click',e=>{if(e.target===mediaViewer)closeMedia()});document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(modal.classList.contains('open'))shut();if(mediaViewer.classList.contains('open'))closeMedia()}});
+    document.querySelector('#openReview').addEventListener('click',openReview);close.addEventListener('click',shut);modal.addEventListener('click',e=>{if(e.target===modal)shut()});const mediaViewer=document.querySelector('#mediaViewer');mediaViewer.querySelector('.media-viewer-close').addEventListener('click',closeMedia);mediaViewer.addEventListener('click',e=>{if(e.target===mediaViewer)closeMedia()});
+    
+    const reviewViewer=document.querySelector('#reviewViewer');
+    document.querySelector('#closeReviewViewer').addEventListener('click',closeReviewViewer);
+    reviewViewer.querySelector('#reviewViewerPrev').addEventListener('click',e=>{e.stopPropagation();moveReviewViewer(-1)});
+    reviewViewer.querySelector('#reviewViewerNext').addEventListener('click',e=>{e.stopPropagation();moveReviewViewer(1)});
+    reviewViewer.addEventListener('click',e=>{if(e.target===reviewViewer)closeReviewViewer()});
+    
+    document.addEventListener('keydown',e=>{
+        if(e.key==='Escape'){
+            if(modal.classList.contains('open'))shut();
+            if(mediaViewer.classList.contains('open'))closeMedia();
+            if(reviewViewer.classList.contains('open'))closeReviewViewer();
+        }
+        if(reviewViewer.classList.contains('open')){
+            if(e.key==='ArrowLeft'){e.preventDefault();moveReviewViewer(-1)}
+            if(e.key==='ArrowRight'){e.preventDefault();moveReviewViewer(1)}
+        }
+    });
+    
     const reviewTrack=document.querySelector('#reviewGrid');document.querySelector('#reviewPrev').addEventListener('click',()=>moveReviews(-1));document.querySelector('#reviewNext').addEventListener('click',()=>moveReviews(1));reviewTrack.addEventListener('scroll',()=>{const cards=[...reviewTrack.querySelectorAll('.review-card')];if(cards.length)reviewIndex=cards.reduce((best,card,i)=>Math.abs(card.offsetLeft-reviewTrack.scrollLeft)<Math.abs(cards[best].offsetLeft-reviewTrack.scrollLeft)?i:best,0)},{passive:true});
     document.querySelector('#reviewForm').addEventListener('submit',async e=>{e.preventDefault();const fd=new FormData(e.target),{error}=await db.from('reviews').insert({author:fd.get('author'),rating:+fd.get('rating'),body:fd.get('body')||'',source:'',is_live:false});if(error)return alert('Your review could not be submitted. Please try again.');e.target.reset();shut();alert('Thank you! Your review was submitted for approval.')});
     const socialFloat=document.querySelector('#socialFloat'),socialPopover=document.querySelector('#socialPopover');function setSocials(open){socialPopover.classList.toggle('open',open);socialPopover.setAttribute('aria-hidden',String(!open));socialFloat.setAttribute('aria-expanded',String(open))}socialFloat.addEventListener('click',()=>setSocials(!socialPopover.classList.contains('open')));socialPopover.querySelector('.social-close').addEventListener('click',()=>setSocials(false));document.addEventListener('click',e=>{if(socialPopover.classList.contains('open')&&!socialPopover.contains(e.target)&&e.target!==socialFloat)setSocials(false)});document.addEventListener('keydown',e=>{if(e.key==='Escape')setSocials(false)});
