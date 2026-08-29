@@ -1016,8 +1016,17 @@
         setTimeout(() => t.remove(), 2400);
       };
       async function boot() {
-        session = (await db.auth.getSession()).data.session;
-        session ? app() : login();
+        // Render sign-in immediately so a slow auth/session request can never
+        // leave the page stuck on the loading screen.
+        login();
+        const result = await Promise.race([
+          db.auth.getSession(),
+          new Promise((resolve) => setTimeout(() => resolve(null), 5000)),
+        ]);
+        if (!result) return;
+        if (result.error) throw result.error;
+        session = result.data.session;
+        if (session) app();
       }
       function login() {
         root.innerHTML = `<div class="login-wrap"><form class="login-card" id="login"><div class="login-brand"><div class="mark">47</div><div><h1>Studio 47</h1><span class="eyebrow">Salon admin</span></div></div><p>Sign in to manage the Studio 47 website.</p><div id="err"></div><div class="stack"><input name="email" type="email" required placeholder="Email"><input name="password" type="password" required placeholder="Password"><button class="primary">Sign in</button></div></form></div>`;
