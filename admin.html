@@ -977,15 +977,22 @@
     </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="login-wrap" role="status" aria-live="polite">
+        <div class="login-card">
+          <div class="login-brand">
+            <div class="mark">47</div>
+            <div><h1>Studio 47</h1><span class="eyebrow">Salon admin</span></div>
+          </div>
+          <p>Loading the admin panel…</p>
+        </div>
+      </div>
+    </div>
     <div id="overlay"></div>
     <script>
-      const db = supabase.createClient(
-          "https://wfxuxrvygyzonkflpwoq.supabase.co",
-          "sb_publishable_e2h4t8AvCobzftt36UrDbw_NJGq8qlJ",
-        ),
-        root = document.querySelector("#root"),
+      const root = document.querySelector("#root"),
         overlay = document.querySelector("#overlay");
+      let db;
       let pageName = "overview",
         data = { content: [], services: [], reviews: [] },
         session;
@@ -2567,7 +2574,22 @@
           aplicarTema(document.documentElement.dataset.theme);
         }
       };
-      boot();
+      function startupError(message) {
+        root.innerHTML = `<div class="login-wrap"><div class="login-card"><div class="login-brand"><div class="mark">47</div><div><h1>Studio 47</h1><span class="eyebrow">Salon admin</span></div></div><div class="error" role="alert">${esc(message)}</div><p>Check your internet connection, then reload this page.</p><button class="primary" type="button" onclick="location.reload()">Try again</button></div></div>`;
+      }
+
+      if (!window.supabase?.createClient) {
+        startupError("The admin service could not be loaded.");
+      } else {
+        db = window.supabase.createClient(
+          "https://wfxuxrvygyzonkflpwoq.supabase.co",
+          "sb_publishable_e2h4t8AvCobzftt36UrDbw_NJGq8qlJ",
+        );
+        boot().catch((error) => {
+          console.error("Admin startup failed", error);
+          startupError("The admin panel could not connect.");
+        });
+      }
     </script>
   </body>
 </html>
