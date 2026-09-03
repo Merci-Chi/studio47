@@ -268,5 +268,126 @@ app=function(){pageName='appointments';root.innerHTML=`<div class="app"><aside c
   const translateButton=document.querySelector('#translatorButton'),translatePanel=document.querySelector('#translatorPanel');translateButton.onclick=()=>{const opening=translatePanel.hidden;translatePanel.hidden=!opening;translateButton.setAttribute('aria-expanded',String(opening))};document.querySelector('#siteLanguage').onchange=e=>applyLanguage(e.target.value);document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDrawer();translatePanel.hidden=true}});ensureGoogleTranslate();load()
 };
 
+
+/* ===== Studio 47 appointment redesign + light/dark mode ===== */
+const appointmentRedesignStyles=document.createElement('style');
+appointmentRedesignStyles.textContent=`
+:root{color-scheme:light}
+html[data-theme="dark"]{color-scheme:dark;--ink:#fff5fa;--muted:#c69eaf;--line:#55313f;--blush:#321824;--shadow:0 16px 38px #00000026}
+html[data-theme="dark"] body{background:#0d0a0c;color:var(--ink)}
+html[data-theme="dark"] main{background:#0d0a0c}
+html[data-theme="dark"] .topbar{background:#151014;border-color:#472333}
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .metric,
+html[data-theme="dark"] .modal,
+html[data-theme="dark"] .review-summary,
+html[data-theme="dark"] .login-card,
+html[data-theme="dark"] .date-chip,
+html[data-theme="dark"] .search,
+html[data-theme="dark"] .icon-btn,
+html[data-theme="dark"] .avatar,
+html[data-theme="dark"] .ghost,
+html[data-theme="dark"] .money-input,
+html[data-theme="dark"] .field input,
+html[data-theme="dark"] .field select,
+html[data-theme="dark"] .field textarea,
+html[data-theme="dark"] .review-filters select,
+html[data-theme="dark"] .appointment-filters input,
+html[data-theme="dark"] .appointment-filters select{background:#191216;color:#fff5fa;border-color:#55313f}
+html[data-theme="dark"] th{background:#21161c;color:#c69eaf}
+html[data-theme="dark"] td{border-color:#3d2831}
+html[data-theme="dark"] .translator-panel{background:#191216;border-color:#55313f}
+html[data-theme="dark"] .translator-panel select{background:#100c0e;color:#fff;border-color:#55313f}
+html[data-theme="dark"] .sidebar{background:#160b11}
+
+.appointment-page{padding:30px 0 10px;max-width:1180px;margin:0 auto}
+.appointment-page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:22px}
+.appointment-title .eyebrow{margin-bottom:7px}
+.appointment-title h1{margin:0;font:400 clamp(2.7rem,5vw,4.6rem)/.98 Georgia,serif;color:var(--ink)}
+.appointment-title p{margin:12px 0 0;color:var(--muted);font-size:.94rem}
+.appointment-head-actions{display:flex;align-items:center;gap:12px}
+.appointment-filter-btn{height:46px;padding:0 18px;border:1px solid #e2a0bd;border-radius:14px;background:#fff;color:#3a1828;font-weight:850;display:inline-flex;align-items:center;gap:9px;box-shadow:0 8px 22px #7a1a4710}
+.appointment-add-btn{width:54px;height:54px;border:0;border-radius:50%;background:linear-gradient(145deg,#ec2c84,#cf0d76);color:#fff;font-size:1.25rem;display:grid;place-items:center;box-shadow:0 12px 26px #cf0d7650}
+.appointment-filter-wrap{position:relative}
+.appointment-filter-panel{position:absolute;right:0;top:56px;z-index:35;width:min(330px,calc(100vw - 32px));padding:14px;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 22px 55px #4d173129;display:grid;gap:10px}
+.appointment-filter-panel[hidden]{display:none}
+.appointment-filter-panel input,.appointment-filter-panel select{width:100%;height:44px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+.appointment-filter-panel .filter-reset{border:0;background:transparent;color:var(--pink);font-weight:850;padding:6px 4px}
+.appointment-groups{display:grid;gap:18px}
+.appointment-day{border:1px solid #efc5d8;border-radius:20px;background:#fff;overflow:hidden;box-shadow:0 10px 30px #65103b0e}
+.appointment-day-head{display:flex;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid #f1d7e3}
+.appointment-day-head i{color:#e21c77;font-size:1.15rem}
+.appointment-day-head h2{margin:0;font:400 1.45rem Georgia,serif;color:#351321}
+.appointment-day-count{margin-left:auto;min-width:32px;height:32px;padding:0 10px;border-radius:999px;background:#fdeaf3;color:#d40d70;display:grid;place-items:center;font-weight:900}
+.appointment-list{display:grid;gap:10px;padding:12px}
+.appointment-item{position:relative;display:grid;grid-template-columns:105px minmax(180px,.9fr) minmax(220px,1.1fr) 44px;align-items:center;gap:16px;min-height:96px;padding:14px 14px 14px 18px;border:1px solid #ead8e1;border-radius:15px;background:linear-gradient(110deg,#fff 0%,#fff 76%,#fff8fb 100%);box-shadow:0 8px 22px #5b18340b}
+.appointment-item:before{content:"";position:absolute;left:0;top:11px;bottom:11px;width:5px;border-radius:0 4px 4px 0;background:linear-gradient(#f23a90,#cf0d76)}
+.appointment-time strong{display:block;font-size:1.45rem;line-height:1;color:#27141d}.appointment-time span{display:block;margin-top:7px;color:#d71572;font-size:.75rem;font-weight:850;letter-spacing:.04em}
+.appointment-with,.appointment-client{padding-left:16px;border-left:1px solid #ecdde4;min-width:0}.appointment-with strong,.appointment-client strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#28151f;font-size:.92rem}.appointment-with span,.appointment-client span{display:block;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#bc3b79;font-size:.79rem}
+.appointment-client span{color:#876370}.appointment-call{width:42px;height:42px;border:0;border-radius:12px;background:#fff0f6;color:#d80d71;display:grid;place-items:center;text-decoration:none;font-size:1rem}
+.appointment-item-actions{position:absolute;right:8px;top:6px}.appointment-item-actions summary{list-style:none;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:#9c647a;cursor:pointer}.appointment-item-actions summary::-webkit-details-marker{display:none}.appointment-action-menu{position:absolute;right:0;top:31px;z-index:12;width:142px;padding:6px;border:1px solid var(--line);border-radius:10px;background:#fff;box-shadow:0 12px 28px #40132622}.appointment-action-menu button{width:100%;border:0;border-radius:7px;padding:8px 9px;background:transparent;color:var(--ink);text-align:left;font-size:.72rem}.appointment-action-menu button:hover{background:var(--blush)}.appointment-action-menu .delete{color:var(--red)}
+.appointment-empty{padding:52px 20px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:16px;background:#fff}
+
+html[data-theme="dark"] .appointment-filter-btn{background:#171115;color:#fff;border-color:#7a244c}
+html[data-theme="dark"] .appointment-filter-panel{background:#171115;border-color:#5a2b40}
+html[data-theme="dark"] .appointment-filter-panel input,html[data-theme="dark"] .appointment-filter-panel select{background:#0f0c0e;color:#fff;border-color:#5a2b40}
+html[data-theme="dark"] .appointment-day{background:#151014;border-color:#5b2940;box-shadow:0 12px 34px #0008}
+html[data-theme="dark"] .appointment-day-head{border-color:#4b2938}
+html[data-theme="dark"] .appointment-day-head h2{color:#fff4f9}
+html[data-theme="dark"] .appointment-day-count{background:#3a1728;color:#ff4b9d}
+html[data-theme="dark"] .appointment-item{background:linear-gradient(110deg,#1a1317,#171115);border-color:#4f3140;box-shadow:0 8px 22px #0005}
+html[data-theme="dark"] .appointment-time strong,html[data-theme="dark"] .appointment-with strong,html[data-theme="dark"] .appointment-client strong{color:#fff7fb}
+html[data-theme="dark"] .appointment-with,html[data-theme="dark"] .appointment-client{border-color:#4d3440}
+html[data-theme="dark"] .appointment-client span{color:#c69eaf}
+html[data-theme="dark"] .appointment-call{background:#2e1422;color:#ff3f94}
+html[data-theme="dark"] .appointment-action-menu{background:#1c1418;border-color:#583144}
+html[data-theme="dark"] .appointment-empty{background:#151014;border-color:#55313f}
+
+@media(max-width:760px){
+  .appointment-page{padding:19px 6px 4px}.appointment-page-head{align-items:flex-end;margin-bottom:18px}.appointment-title h1{font-size:2.85rem}.appointment-title p{font-size:.84rem;max-width:260px}.appointment-head-actions{gap:9px}.appointment-filter-btn{height:43px;padding:0 14px}.appointment-add-btn{width:49px;height:49px}.appointment-filter-panel{position:fixed;top:72px;right:10px;left:10px;width:auto}
+  .appointment-day{border-radius:17px}.appointment-day-head{padding:15px 14px}.appointment-day-head h2{font-size:1.25rem}.appointment-list{padding:9px;gap:8px}.appointment-item{grid-template-columns:74px minmax(0,.9fr) minmax(0,1.1fr) 38px;gap:8px;min-height:92px;padding:12px 8px 12px 13px;border-radius:13px}.appointment-time strong{font-size:1.25rem}.appointment-time span{font-size:.68rem}.appointment-with,.appointment-client{padding-left:9px}.appointment-with strong,.appointment-client strong{font-size:.79rem}.appointment-with span,.appointment-client span{font-size:.68rem}.appointment-call{width:36px;height:36px;border-radius:10px}.appointment-item-actions{display:none}
+}
+@media(max-width:420px){.appointment-title h1{font-size:2.55rem}.appointment-title p{display:none}.appointment-item{grid-template-columns:66px minmax(0,.86fr) minmax(0,1.14fr) 34px}.appointment-with strong,.appointment-client strong{font-size:.75rem}.appointment-with span,.appointment-client span{font-size:.64rem}.appointment-call{width:32px;height:32px}}
+`;
+document.head.appendChild(appointmentRedesignStyles);
+
+function appointmentThemeInit(){
+  const saved=localStorage.getItem('studio47_admin_theme')||'light';
+  document.documentElement.dataset.theme=saved;
+}
+appointmentThemeInit();
+function installThemeToggle(){
+  const actions=document.querySelector('.top-actions');if(!actions||document.querySelector('#themeToggle'))return;
+  const btn=document.createElement('button');btn.type='button';btn.className='icon-btn';btn.id='themeToggle';btn.setAttribute('aria-label','Toggle light and dark mode');
+  const paint=()=>{const dark=document.documentElement.dataset.theme==='dark';btn.innerHTML=`<i class="fa-solid ${dark?'fa-sun':'fa-moon'}"></i>`;btn.title=dark?'Use light mode':'Use dark mode'};
+  btn.onclick=()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;localStorage.setItem('studio47_admin_theme',next);paint()};
+  const translator=document.querySelector('.translator');actions.insertBefore(btn,translator||actions.firstChild);paint();
+}
+const appBeforeAppointmentTheme=app;
+app=function(){appBeforeAppointmentTheme();installThemeToggle()};
+
+const formatClock=value=>{const raw=String(value||'00:00').slice(0,5),[hh,mm]=raw.split(':').map(Number),hour=((hh+11)%12)+1,ampm=hh>=12?'PM':'AM';return {time:`${hour}:${String(mm).padStart(2,'0')}`,ampm}};
+const formatDayHeading=date=>new Date(`${date}T12:00:00`).toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+
+appointmentsManager=function(){
+  const stylists=[...new Set(data.appointments.map(x=>x.stylist).filter(Boolean))].sort(),types=[...new Set(data.appointments.map(x=>x.service_type).filter(Boolean))].sort();
+  document.querySelector('#view').innerHTML=`<section class="appointment-page"><div class="appointment-page-head"><div class="appointment-title"><div class="eyebrow">Schedule</div><h1>Appointments</h1><p>View and manage your upcoming appointments.</p></div><div class="appointment-head-actions"><div class="appointment-filter-wrap"><button class="appointment-filter-btn" id="appointmentFilterButton" type="button" aria-expanded="false"><i class="fa-solid fa-sliders"></i> Filter</button><div class="appointment-filter-panel" id="appointmentFilterPanel" hidden><input id="appointmentDay" type="date" aria-label="Date"><select id="appointmentStylist"><option value="">All stylists</option>${stylists.map(x=>`<option>${esc(x)}</option>`).join('')}</select><select id="appointmentType"><option value="">All services</option>${types.map(x=>`<option>${esc(x)}</option>`).join('')}</select><select id="appointmentStatus"><option value="">All statuses</option><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="cancelled">Cancelled</option></select><select id="appointmentSort"><option value="asc">Soonest first</option><option value="desc">Latest first</option></select><button class="filter-reset" id="appointmentFilterReset" type="button">Reset filters</button></div></div><button class="appointment-add-btn" id="addAppointment" type="button" aria-label="Set appointment"><i class="fa-solid fa-plus"></i></button></div></div><div class="appointment-groups" id="appointmentRows"></div></section>`;
+  const panel=document.querySelector('#appointmentFilterPanel'),button=document.querySelector('#appointmentFilterButton');
+  button.onclick=()=>{const open=panel.hidden;panel.hidden=!open;button.setAttribute('aria-expanded',String(open))};
+  document.querySelector('#addAppointment').onclick=()=>appointmentEditor();
+  ['appointmentDay','appointmentStylist','appointmentType','appointmentStatus','appointmentSort'].forEach(id=>document.querySelector('#'+id).onchange=renderAppointmentRows);
+  document.querySelector('#appointmentFilterReset').onclick=()=>{['appointmentDay','appointmentStylist','appointmentType','appointmentStatus'].forEach(id=>document.querySelector('#'+id).value='');document.querySelector('#appointmentSort').value='asc';renderAppointmentRows()};
+  renderAppointmentRows();
+};
+
+renderAppointmentRows=function(){
+  const get=id=>document.querySelector('#'+id)?.value||'',day=get('appointmentDay'),stylist=get('appointmentStylist'),type=get('appointmentType'),status=get('appointmentStatus'),sort=get('appointmentSort')||'asc';
+  let rows=data.appointments.filter(a=>(!day||a.appointment_date===day)&&(!stylist||a.stylist===stylist)&&(!type||a.service_type===type)&&(!status||(a.status||'pending')===status)).sort((a,b)=>(appointmentDateTime(a)-appointmentDateTime(b))*(sort==='asc'?1:-1));
+  const host=document.querySelector('#appointmentRows');if(!host)return;
+  if(!rows.length){host.innerHTML='<div class="appointment-empty">No appointments match these filters.</div>';return}
+  const groups=new Map();rows.forEach(a=>{if(!groups.has(a.appointment_date))groups.set(a.appointment_date,[]);groups.get(a.appointment_date).push(a)});
+  host.innerHTML=[...groups.entries()].map(([date,items])=>`<section class="appointment-day"><header class="appointment-day-head"><i class="fa-regular fa-calendar"></i><h2>${esc(formatDayHeading(date))}</h2><span class="appointment-day-count">${items.length}</span></header><div class="appointment-list">${items.map(a=>{const clock=formatClock(a.appointment_time),state=a.status||'pending';return `<article class="appointment-item"><div class="appointment-time"><strong>${esc(clock.time)}</strong><span>${clock.ampm}</span></div><div class="appointment-with"><strong>With ${esc(a.stylist||'No preference')}</strong><span>${esc(a.service_type||'Appointment')}</span></div><div class="appointment-client"><strong>${esc(a.client_name||'Client')}</strong><span>${esc(a.phone||'No phone')}</span></div><a class="appointment-call" href="tel:${esc(a.phone||'')}" aria-label="Call ${esc(a.client_name||'client')}"><i class="fa-solid fa-phone"></i></a><details class="appointment-item-actions"><summary><i class="fa-solid fa-ellipsis"></i></summary><div class="appointment-action-menu"><button type="button" onclick="appointmentEditor(data.appointments.find(x=>x.id==='${a.id}'))">Edit</button>${state!=='confirmed'?`<button type="button" onclick="appointmentStatus('${a.id}','confirmed')">Confirm</button>`:''}${state!=='cancelled'?`<button type="button" onclick="appointmentStatus('${a.id}','cancelled')">Cancel</button>`:''}<button type="button" class="delete" onclick="removeAppointment('${a.id}')">Delete</button></div></details></article>`}).join('')}</div></section>`).join('');
+};
+
 boot();
 </script></body></html>
