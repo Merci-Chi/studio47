@@ -699,4 +699,258 @@ boot();
 })();
 </script>
 
+
+<script>
+/* ===== Mobile appointment layout + expandable appointment details ===== */
+(() => {
+  const mobileAppointmentStyles=document.createElement('style');
+  mobileAppointmentStyles.textContent=`
+  .appointment-item{
+    cursor:pointer;
+    grid-template-columns:105px minmax(180px,.9fr) minmax(220px,1.1fr) 44px;
+    transition:border-color .18s,box-shadow .18s,transform .18s;
+  }
+  .appointment-item:hover{border-color:#e5a7c2;box-shadow:0 10px 28px #5b183414}
+  .appointment-expand-icon{
+    position:absolute;right:11px;bottom:10px;width:30px;height:30px;border-radius:9px;
+    display:grid;place-items:center;color:#b76b8d;background:transparent;transition:transform .2s;
+  }
+  .appointment-item.expanded .appointment-expand-icon{transform:rotate(180deg)}
+  .appointment-extra{
+    display:none;grid-column:1/-1;padding:12px 4px 2px;border-top:1px solid var(--line);
+    grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;
+  }
+  .appointment-item.expanded .appointment-extra{display:grid}
+  .appointment-detail-box{
+    min-width:0;padding:10px 12px;border-radius:11px;background:var(--blush);
+  }
+  .appointment-detail-box small{
+    display:block;margin-bottom:4px;color:var(--muted);font-size:.61rem;font-weight:900;
+    letter-spacing:.08em;text-transform:uppercase;
+  }
+  .appointment-detail-box strong,.appointment-detail-box a{
+    display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    color:var(--ink);font-size:.78rem;text-decoration:none;
+  }
+  .appointment-detail-actions{
+    grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;padding-top:2px;
+  }
+  .appointment-detail-actions button{
+    min-height:36px;padding:0 12px;border-radius:9px;font-size:.7rem;font-weight:850;
+  }
+  .appointment-detail-actions .detail-primary{border:0;background:var(--pink);color:#fff}
+  .appointment-detail-actions .detail-secondary{border:1px solid var(--line);background:#fff;color:var(--wine)}
+  .appointment-detail-actions .detail-danger{border:0;background:#fff0f2;color:var(--red)}
+  html[data-theme="dark"] .appointment-detail-box{background:#271721}
+  html[data-theme="dark"] .appointment-detail-actions .detail-secondary{background:#1b1418;color:#fff;border-color:#55313f}
+  html[data-theme="dark"] .appointment-detail-actions .detail-danger{background:#34151c}
+
+  @media(max-width:760px){
+    main{padding-left:8px!important;padding-right:8px!important}
+    .appointment-page{padding:14px 0 6px!important;max-width:100%}
+    .appointment-page-head{
+      display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:end!important;
+      gap:10px!important;margin-bottom:14px!important;padding:0 2px;
+    }
+    .appointment-title h1{font-size:2.35rem!important;line-height:1!important}
+    .appointment-title .eyebrow{font-size:.59rem!important;margin-bottom:5px!important}
+    .appointment-title p{font-size:.76rem!important;margin-top:7px!important}
+    .appointment-head-actions{gap:7px!important}
+    .appointment-filter-btn{
+      width:43px!important;height:43px!important;padding:0!important;border-radius:12px!important;
+      font-size:0!important;justify-content:center!important;
+    }
+    .appointment-filter-btn i{font-size:.95rem!important}
+    .appointment-add-btn{width:43px!important;height:43px!important;font-size:1rem!important}
+    .appointment-filter-panel{top:68px!important;right:8px!important;left:8px!important;padding:11px!important;border-radius:14px!important}
+    .appointment-filter-panel input,.appointment-filter-panel select{height:42px!important;font-size:16px!important}
+
+    .appointment-section-label{margin:1px 3px 7px!important;font-size:.61rem!important}
+    .appointment-groups{gap:12px!important}
+    .appointment-day{border-radius:14px!important}
+    .appointment-day-head{padding:11px 12px!important;gap:8px!important}
+    .appointment-day-head i{font-size:.92rem!important}
+    .appointment-day-head h2{font-size:1.04rem!important}
+    .appointment-day-count{min-width:27px!important;height:27px!important;padding:0 8px!important;font-size:.72rem!important}
+
+    .appointment-list{padding:7px!important;gap:7px!important}
+    .appointment-item{
+      display:grid!important;
+      grid-template-columns:64px minmax(0,1fr) 28px!important;
+      gap:9px!important;
+      min-height:72px!important;
+      padding:10px 9px 10px 12px!important;
+      border-radius:12px!important;
+      align-items:center!important;
+    }
+    .appointment-item:before{top:8px!important;bottom:8px!important;width:4px!important}
+    .appointment-time{grid-column:1}
+    .appointment-time strong{font-size:1.08rem!important}
+    .appointment-time span{margin-top:5px!important;font-size:.61rem!important}
+
+    .appointment-with{
+      grid-column:2!important;
+      padding-left:10px!important;
+      border-left:1px solid var(--line)!important;
+    }
+    .appointment-with strong{font-size:.78rem!important}
+    .appointment-with span{font-size:.67rem!important;margin-top:3px!important}
+
+    .appointment-client,.appointment-call,.appointment-item-actions{display:none!important}
+    .appointment-expand-icon{
+      position:static!important;grid-column:3!important;grid-row:1!important;
+      width:28px!important;height:28px!important;font-size:.72rem!important;
+    }
+
+    .appointment-extra{
+      grid-column:1/-1!important;
+      grid-template-columns:1fr 1fr!important;
+      gap:7px!important;
+      margin-top:2px!important;padding:10px 0 0!important;
+    }
+    .appointment-detail-box{padding:9px!important}
+    .appointment-detail-box small{font-size:.54rem!important}
+    .appointment-detail-box strong,.appointment-detail-box a{font-size:.7rem!important}
+    .appointment-detail-box.status-box{grid-column:1/-1}
+    .appointment-detail-actions{
+      display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+      gap:7px!important;
+    }
+    .appointment-detail-actions button{width:100%!important;min-height:38px!important;padding:0 8px!important}
+    .appointment-today-empty{padding:19px 12px!important;font-size:.78rem!important;border-radius:13px!important;margin-bottom:12px!important}
+  }
+
+  @media(max-width:380px){
+    .appointment-title h1{font-size:2.12rem!important}
+    .appointment-title p{display:none!important}
+    .appointment-page-head{align-items:center!important}
+    .appointment-item{grid-template-columns:58px minmax(0,1fr) 26px!important;gap:7px!important}
+    .appointment-time strong{font-size:1rem!important}
+    .appointment-with{padding-left:8px!important}
+    .appointment-with strong{font-size:.73rem!important}
+    .appointment-with span{font-size:.62rem!important}
+  }
+  `;
+  document.head.appendChild(mobileAppointmentStyles);
+
+  window.toggleAppointmentCard = function(card,event){
+    if(event){
+      const interactive=event.target.closest('a,button,summary,details');
+      if(interactive)return;
+    }
+    card.classList.toggle('expanded');
+    card.setAttribute('aria-expanded',String(card.classList.contains('expanded')));
+  };
+
+  window.renderAppointmentRows = function(){
+    const get=id=>document.querySelector('#'+id)?.value||'';
+    const day=get('appointmentDay'),stylist=get('appointmentStylist'),type=get('appointmentType'),
+          status=get('appointmentStatus'),sort=get('appointmentSort')||'asc';
+
+    let rows=data.appointments.filter(a=>
+      (!day||a.appointment_date===day)&&
+      (!stylist||a.stylist===stylist)&&
+      (!type||a.service_type===type)&&
+      (!status||(a.status||'pending')===status)
+    ).sort((a,b)=>(appointmentDateTime(a)-appointmentDateTime(b))*(sort==='asc'?1:-1));
+
+    const host=document.querySelector('#appointmentRows');
+    if(!host)return;
+
+    const now=new Date();
+    const pad=n=>String(n).padStart(2,'0');
+    const todayKey=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+
+    const appointmentCard=a=>{
+      const clock=formatClock(a.appointment_time),state=a.status||'pending';
+      const statusLabel=state.charAt(0).toUpperCase()+state.slice(1);
+      return `<article class="appointment-item" tabindex="0" role="button" aria-expanded="false"
+        onclick="toggleAppointmentCard(this,event)"
+        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleAppointmentCard(this)}">
+        <div class="appointment-time">
+          <strong>${esc(clock.time)}</strong><span>${clock.ampm}</span>
+        </div>
+        <div class="appointment-with">
+          <strong>With ${esc(a.stylist||'No preference')}</strong>
+          <span>${esc(a.service_type||'Appointment')}</span>
+        </div>
+        <div class="appointment-client">
+          <strong>${esc(a.client_name||'Client')}</strong>
+          <span>${esc(a.phone||'No phone')}</span>
+        </div>
+        <a class="appointment-call" href="tel:${esc(a.phone||'')}" aria-label="Call ${esc(a.client_name||'client')}">
+          <i class="fa-solid fa-phone"></i>
+        </a>
+        <div class="appointment-expand-icon" aria-hidden="true"><i class="fa-solid fa-chevron-down"></i></div>
+
+        <div class="appointment-extra">
+          <div class="appointment-detail-box">
+            <small>Client</small>
+            <strong>${esc(a.client_name||'Client')}</strong>
+          </div>
+          <div class="appointment-detail-box">
+            <small>Phone</small>
+            <a href="tel:${esc(a.phone||'')}">${esc(a.phone||'No phone')}</a>
+          </div>
+          <div class="appointment-detail-box status-box">
+            <small>Status</small>
+            <strong>${esc(statusLabel)}</strong>
+          </div>
+          <div class="appointment-detail-actions">
+            <button class="detail-secondary" type="button" onclick="event.stopPropagation();appointmentEditor(data.appointments.find(x=>x.id==='${a.id}'))">Edit</button>
+            ${state!=='confirmed'?`<button class="detail-primary" type="button" onclick="event.stopPropagation();appointmentStatus('${a.id}','confirmed')">Confirm</button>`:''}
+            ${state!=='cancelled'?`<button class="detail-secondary" type="button" onclick="event.stopPropagation();appointmentStatus('${a.id}','cancelled')">Cancel</button>`:''}
+            <button class="detail-danger" type="button" onclick="event.stopPropagation();removeAppointment('${a.id}')">Delete</button>
+          </div>
+        </div>
+      </article>`;
+    };
+
+    const dayGroup=(date,items)=>`<section class="appointment-day">
+      <header class="appointment-day-head">
+        <i class="fa-regular fa-calendar"></i>
+        <h2>${esc(formatDayHeading(date))}</h2>
+        <span class="appointment-day-count">${items.length}</span>
+      </header>
+      <div class="appointment-list">${items.map(appointmentCard).join('')}</div>
+    </section>`;
+
+    if(day){
+      host.innerHTML=rows.length?dayGroup(day,rows):'<div class="appointment-empty">No appointments on this day.</div>';
+      return;
+    }
+
+    const todayRows=rows.filter(a=>a.appointment_date===todayKey);
+    const futureRows=rows.filter(a=>a.appointment_date>todayKey);
+    const olderRows=rows.filter(a=>a.appointment_date<todayKey);
+
+    const futureGroups=new Map();
+    futureRows.forEach(a=>{
+      if(!futureGroups.has(a.appointment_date))futureGroups.set(a.appointment_date,[]);
+      futureGroups.get(a.appointment_date).push(a);
+    });
+
+    let html=`<div class="appointment-section-label">Today</div>`;
+    html+=todayRows.length
+      ? dayGroup(todayKey,todayRows)
+      : `<div class="appointment-today-empty">No appointments today${stylist?` for ${esc(stylist)}`:''}.</div>`;
+
+    html+=`<div class="appointment-section-label">Future appointments${stylist?` · ${esc(stylist)}`:''}</div>`;
+    html+=futureRows.length
+      ? [...futureGroups.entries()].map(([date,items])=>dayGroup(date,items)).join('')
+      : `<div class="appointment-today-empty">No future appointments${stylist?` for ${esc(stylist)}`:''}.</div>`;
+
+    if(sort==='desc'&&olderRows.length){
+      const oldGroups=new Map();
+      olderRows.forEach(a=>{
+        if(!oldGroups.has(a.appointment_date))oldGroups.set(a.appointment_date,[]);
+        oldGroups.get(a.appointment_date).push(a);
+      });
+      html+=`<div class="appointment-section-label">Past appointments</div>${[...oldGroups.entries()].map(([date,items])=>dayGroup(date,items)).join('')}`;
+    }
+    host.innerHTML=html;
+  };
+})();
+</script>
+
 </body></html>
