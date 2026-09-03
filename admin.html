@@ -390,4 +390,313 @@ renderAppointmentRows=function(){
 };
 
 boot();
-</script></body></html>
+</script>
+<script>
+/* ===== Appointment UX improvements: calendar picker, Apple-style time wheels, team-aware filtering ===== */
+(() => {
+  const extraStyles = document.createElement('style');
+  extraStyles.textContent = `
+  .picker-field{
+    width:100%;min-height:48px;padding:0 13px;border:1px solid var(--line);border-radius:10px;
+    background:#fff;color:var(--ink);display:flex;align-items:center;justify-content:space-between;
+    gap:12px;text-align:left;font-weight:750;
+  }
+  .picker-field .picker-placeholder{color:var(--muted);font-weight:650}
+  .picker-field i{color:var(--pink)}
+  html[data-theme="dark"] .picker-field{background:#191216;color:#fff5fa;border-color:#55313f}
+
+  .native-date-proxy{position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none}
+
+  .time-picker-sheet{
+    position:fixed;inset:auto 0 0;z-index:95;padding:18px 14px max(18px,env(safe-area-inset-bottom));
+    background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -24px 65px #3a122b38;
+  }
+  .time-picker-backdrop{position:fixed;inset:0;z-index:94;background:#1e08148c;border:0}
+  .time-picker-top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}
+  .time-picker-top strong{font:400 1.35rem Georgia,serif}
+  .time-picker-top button{border:0;background:transparent;color:var(--pink);font-weight:900;padding:8px}
+  .time-wheels{
+    position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;height:230px;
+    overflow:hidden;max-width:520px;margin:0 auto;
+  }
+  .time-wheels:before,.time-wheels:after{
+    content:"";position:absolute;left:0;right:0;height:82px;z-index:3;pointer-events:none;
+  }
+  .time-wheels:before{top:0;background:linear-gradient(#fff,rgba(255,255,255,.88),rgba(255,255,255,0))}
+  .time-wheels:after{bottom:0;background:linear-gradient(rgba(255,255,255,0),rgba(255,255,255,.88),#fff)}
+  .time-wheel-highlight{
+    position:absolute;left:0;right:0;top:91px;height:48px;border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);background:var(--blush);z-index:0;border-radius:8px;
+  }
+  .time-wheel{
+    position:relative;z-index:1;overflow-y:auto;scroll-snap-type:y mandatory;
+    scrollbar-width:none;padding:91px 0;
+  }
+  .time-wheel::-webkit-scrollbar{display:none}
+  .time-wheel button{
+    width:100%;height:48px;border:0;background:transparent;color:var(--ink);
+    scroll-snap-align:center;font-size:1.35rem;font-weight:700;
+  }
+  .time-wheel button.selected{color:var(--pink);font-weight:900}
+  html[data-theme="dark"] .time-picker-sheet{background:#151014;color:#fff}
+  html[data-theme="dark"] .time-wheels:before{background:linear-gradient(#151014,rgba(21,16,20,.9),rgba(21,16,20,0))}
+  html[data-theme="dark"] .time-wheels:after{background:linear-gradient(rgba(21,16,20,0),rgba(21,16,20,.9),#151014)}
+  html[data-theme="dark"] .time-wheel-highlight{background:#281722;border-color:#55313f}
+  html[data-theme="dark"] .time-wheel button{color:#fff5fa}
+
+  .appointment-section-label{
+    margin:3px 2px 10px;color:var(--pink);font-size:.69rem;font-weight:950;
+    letter-spacing:.14em;text-transform:uppercase;
+  }
+  .appointment-today-empty{
+    padding:27px 18px;border:1px dashed var(--line);border-radius:16px;background:#fff;
+    color:var(--muted);text-align:center;margin-bottom:18px;
+  }
+  html[data-theme="dark"] .appointment-today-empty{background:#151014;border-color:#55313f}
+
+  @media(min-width:761px){
+    .time-picker-sheet{
+      left:50%;right:auto;bottom:50%;transform:translate(-50%,50%);
+      width:min(560px,calc(100vw - 36px));border-radius:22px;padding:22px;
+    }
+    .time-picker-backdrop{background:#1e081475}
+  }
+  `;
+  document.head.appendChild(extraStyles);
+
+  const pad2 = n => String(n).padStart(2,'0');
+
+  function datePretty(value){
+    if(!value) return 'Choose date';
+    return new Date(`${value}T12:00:00`).toLocaleDateString('en-US',{
+      weekday:'long',month:'short',day:'numeric',year:'numeric'
+    });
+  }
+
+  function timePretty(value){
+    if(!value) return 'Choose time';
+    const [h,m] = String(value).slice(0,5).split(':').map(Number);
+    const hour = ((h+11)%12)+1;
+    return `${hour}:${pad2(m)} ${h>=12?'PM':'AM'}`;
+  }
+
+  function openDatePicker(button, hiddenInput){
+    if(typeof hiddenInput.showPicker === 'function'){
+      hiddenInput.showPicker();
+    }else{
+      hiddenInput.focus();
+      hiddenInput.click();
+    }
+  }
+
+  function makePickerButton({label, value, icon, id}){
+    return `<button type="button" class="picker-field" id="${id}">
+      <span class="${value?'':'picker-placeholder'}">${esc(label)}</span>
+      <i class="fa-solid ${icon}"></i>
+    </button>`;
+  }
+
+  window.openWheelTimePicker = function(currentValue, onDone){
+    const [rawH,rawM] = String(currentValue||'09:00').split(':').map(Number);
+    let hour12=((rawH+11)%12)+1, minute=[0,15,30,45].reduce((a,b)=>Math.abs(b-rawM)<Math.abs(a-rawM)?b:a,0), meridiem=rawH>=12?'PM':'AM';
+
+    const hourOptions = Array.from({length:12},(_,i)=>i+1);
+    const minuteOptions = [0,15,30,45];
+    const ampmOptions = ['AM','PM'];
+
+    const overlayEl=document.querySelector('#overlay');
+    const previous=overlayEl.innerHTML;
+    overlayEl.innerHTML=`
+      <button class="time-picker-backdrop" id="timeBackdrop" aria-label="Close time picker"></button>
+      <div class="time-picker-sheet" role="dialog" aria-modal="true" aria-label="Choose time">
+        <div class="time-picker-top">
+          <button type="button" id="timeCancel">Cancel</button>
+          <strong>Choose time</strong>
+          <button type="button" id="timeDone">Done</button>
+        </div>
+        <div class="time-wheels">
+          <div class="time-wheel-highlight"></div>
+          <div class="time-wheel" id="hourWheel">${hourOptions.map(v=>`<button type="button" data-v="${v}">${v}</button>`).join('')}</div>
+          <div class="time-wheel" id="minuteWheel">${minuteOptions.map(v=>`<button type="button" data-v="${v}">${pad2(v)}</button>`).join('')}</div>
+          <div class="time-wheel" id="ampmWheel">${ampmOptions.map(v=>`<button type="button" data-v="${v}">${v}</button>`).join('')}</div>
+        </div>
+      </div>`;
+
+    const close=()=>overlayEl.innerHTML=previous;
+    document.querySelector('#timeCancel').onclick=close;
+    document.querySelector('#timeBackdrop').onclick=close;
+
+    const configure=(id,initial,setter)=>{
+      const wheel=document.querySelector('#'+id), buttons=[...wheel.querySelectorAll('button')];
+      const choose=button=>{
+        buttons.forEach(b=>b.classList.toggle('selected',b===button));
+        setter(button.dataset.v);
+      };
+      buttons.forEach(button=>button.onclick=()=>{button.scrollIntoView({block:'center',behavior:'smooth'});choose(button)});
+      const selected=buttons.find(b=>String(b.dataset.v)===String(initial))||buttons[0];
+      setTimeout(()=>{selected.scrollIntoView({block:'center'});choose(selected)},20);
+
+      let timer;
+      wheel.addEventListener('scroll',()=>{
+        clearTimeout(timer);
+        timer=setTimeout(()=>{
+          const box=wheel.getBoundingClientRect(), center=box.top+box.height/2;
+          let best=buttons[0],dist=Infinity;
+          buttons.forEach(b=>{const r=b.getBoundingClientRect(),d=Math.abs((r.top+r.height/2)-center);if(d<dist){dist=d;best=b}});
+          choose(best);
+        },80);
+      });
+    };
+
+    configure('hourWheel',hour12,v=>hour12=Number(v));
+    configure('minuteWheel',minute,v=>minute=Number(v));
+    configure('ampmWheel',meridiem,v=>meridiem=v);
+
+    document.querySelector('#timeDone').onclick=()=>{
+      let h=hour12%12;if(meridiem==='PM')h+=12;
+      const value=`${pad2(h)}:${pad2(minute)}`;
+      close();onDone(value);
+    };
+  };
+
+  const oldAppointmentEditor = window.appointmentEditor;
+  window.appointmentEditor = function(a={}){
+    oldAppointmentEditor(a);
+
+    const form=document.querySelector('#appointmentEdit');
+    if(!form) return;
+
+    const dateInput=form.querySelector('input[name="appointment_date"]');
+    const timeInput=form.querySelector('input[name="appointment_time"]');
+    if(!dateInput || !timeInput) return;
+
+    dateInput.classList.add('native-date-proxy');
+    timeInput.type='hidden';
+
+    const dateButtonWrap=document.createElement('div');
+    dateButtonWrap.className='field';
+    dateButtonWrap.innerHTML=`<label>Date</label>${makePickerButton({
+      label:datePretty(dateInput.value),value:dateInput.value,icon:'fa-calendar-days',id:'appointmentDateButton'
+    })}`;
+    dateInput.closest('.field').replaceWith(dateButtonWrap);
+    dateButtonWrap.appendChild(dateInput);
+
+    const timeButtonWrap=document.createElement('div');
+    timeButtonWrap.className='field';
+    timeButtonWrap.innerHTML=`<label>Time</label>${makePickerButton({
+      label:timePretty(timeInput.value),value:timeInput.value,icon:'fa-clock',id:'appointmentTimeButton'
+    })}`;
+    timeInput.closest('.field').replaceWith(timeButtonWrap);
+    timeButtonWrap.appendChild(timeInput);
+
+    const dateButton=document.querySelector('#appointmentDateButton');
+    const timeButton=document.querySelector('#appointmentTimeButton');
+
+    dateButton.onclick=()=>openDatePicker(dateButton,dateInput);
+    dateInput.onchange=()=>{
+      dateButton.querySelector('span').textContent=datePretty(dateInput.value);
+      dateButton.querySelector('span').classList.toggle('picker-placeholder',!dateInput.value);
+    };
+
+    timeButton.onclick=()=>openWheelTimePicker(timeInput.value,value=>{
+      timeInput.value=value;
+      timeButton.querySelector('span').textContent=timePretty(value);
+      timeButton.querySelector('span').classList.remove('picker-placeholder');
+    });
+  };
+
+  const previousAppointmentsManager = window.appointmentsManager;
+  window.appointmentsManager = function(){
+    previousAppointmentsManager();
+
+    // Always show every actual team member in the filter, even when they have zero appointments.
+    const select=document.querySelector('#appointmentStylist');
+    if(select){
+      const current=select.value;
+      select.innerHTML=`<option value="">All team members</option>${data.team
+        .slice()
+        .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')))
+        .map(member=>`<option value="${esc(member.name)}">${esc(member.name)}</option>`).join('')}`;
+      select.value=current;
+      select.onchange=renderAppointmentRows;
+    }
+  };
+
+  window.renderAppointmentRows = function(){
+    const get=id=>document.querySelector('#'+id)?.value||'';
+    const day=get('appointmentDay'),stylist=get('appointmentStylist'),type=get('appointmentType'),
+          status=get('appointmentStatus'),sort=get('appointmentSort')||'asc';
+
+    let rows=data.appointments.filter(a=>
+      (!day||a.appointment_date===day)&&
+      (!stylist||a.stylist===stylist)&&
+      (!type||a.service_type===type)&&
+      (!status||(a.status||'pending')===status)
+    ).sort((a,b)=>(appointmentDateTime(a)-appointmentDateTime(b))*(sort==='asc'?1:-1));
+
+    const host=document.querySelector('#appointmentRows');if(!host)return;
+
+    const today=new Date();
+    const todayKey=`${today.getFullYear()}-${pad2(today.getMonth()+1)}-${pad2(today.getDate())}`;
+
+    const card = (a)=>{
+      const clock=formatClock(a.appointment_time),state=a.status||'pending';
+      return `<article class="appointment-item">
+        <div class="appointment-time"><strong>${esc(clock.time)}</strong><span>${clock.ampm}</span></div>
+        <div class="appointment-with"><strong>With ${esc(a.stylist||'No preference')}</strong><span>${esc(a.service_type||'Appointment')}</span></div>
+        <div class="appointment-client"><strong>${esc(a.client_name||'Client')}</strong><span>${esc(a.phone||'No phone')}</span></div>
+        <a class="appointment-call" href="tel:${esc(a.phone||'')}" aria-label="Call ${esc(a.client_name||'client')}"><i class="fa-solid fa-phone"></i></a>
+        <details class="appointment-item-actions"><summary><i class="fa-solid fa-ellipsis"></i></summary>
+          <div class="appointment-action-menu">
+            <button type="button" onclick="appointmentEditor(data.appointments.find(x=>x.id==='${a.id}'))">Edit</button>
+            ${state!=='confirmed'?`<button type="button" onclick="appointmentStatus('${a.id}','confirmed')">Confirm</button>`:''}
+            ${state!=='cancelled'?`<button type="button" onclick="appointmentStatus('${a.id}','cancelled')">Cancel</button>`:''}
+            <button type="button" class="delete" onclick="removeAppointment('${a.id}')">Delete</button>
+          </div>
+        </details>
+      </article>`;
+    };
+
+    const dayGroup=(date,items)=>`<section class="appointment-day">
+      <header class="appointment-day-head">
+        <i class="fa-regular fa-calendar"></i>
+        <h2>${esc(formatDayHeading(date))}</h2>
+        <span class="appointment-day-count">${items.length}</span>
+      </header>
+      <div class="appointment-list">${items.map(card).join('')}</div>
+    </section>`;
+
+    // A specific date filter should continue to show only that date.
+    if(day){
+      if(!rows.length){host.innerHTML='<div class="appointment-empty">No appointments on this day.</div>';return}
+      host.innerHTML=dayGroup(day,rows);
+      return;
+    }
+
+    const todayRows=rows.filter(a=>a.appointment_date===todayKey);
+    const futureRows=rows.filter(a=>a.appointment_date>todayKey);
+    const olderRows=rows.filter(a=>a.appointment_date<todayKey);
+
+    const futureGroups=new Map();
+    futureRows.forEach(a=>{if(!futureGroups.has(a.appointment_date))futureGroups.set(a.appointment_date,[]);futureGroups.get(a.appointment_date).push(a)});
+
+    let html=`<div class="appointment-section-label">Today</div>`;
+    html+=todayRows.length?dayGroup(todayKey,todayRows):`<div class="appointment-today-empty">No appointments today${stylist?` for ${esc(stylist)}`:''}.</div>`;
+
+    html+=`<div class="appointment-section-label">Future appointments${stylist?` · ${esc(stylist)}`:''}</div>`;
+    html+=futureRows.length
+      ? [...futureGroups.entries()].map(([date,items])=>dayGroup(date,items)).join('')
+      : `<div class="appointment-today-empty">No future appointments${stylist?` for ${esc(stylist)}`:''}.</div>`;
+
+    if(sort==='desc' && olderRows.length){
+      const oldGroups=new Map();
+      olderRows.forEach(a=>{if(!oldGroups.has(a.appointment_date))oldGroups.set(a.appointment_date,[]);oldGroups.get(a.appointment_date).push(a)});
+      html+=`<div class="appointment-section-label">Past appointments</div>${[...oldGroups.entries()].map(([date,items])=>dayGroup(date,items)).join('')}`;
+    }
+
+    host.innerHTML=html;
+  };
+})();
+</script>
+
+</body></html>
