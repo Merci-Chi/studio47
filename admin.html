@@ -953,4 +953,39 @@ boot();
 })();
 </script>
 
+<script>
+/* Dedicated appointments table integration. Public bookings arrive confirmed. */
+const legacyLoadAppointments=load;
+load=async function(note=false){
+  const results=await Promise.all([db.from('site_content').select('*').order('sort_order'),db.from('services').select('*').order('sort_order'),db.from('reviews').select('*').order('created_at',{ascending:false}),db.from('appointments').select('*').order('appointment_date').order('appointment_time')]);
+  const error=results.find(x=>x.error)?.error;if(error)return document.querySelector('#view').innerHTML=`<div class="page-head"><div><div class="eyebrow">Dashboard</div><h1>Unable to load data</h1><p>${esc(error.message)}</p></div></div>`;
+  const team=results[0].data.filter(x=>x.section==='team').map(x=>{try{return {...JSON.parse(x.content_value||'{}'),id:x.id,content_key:x.content_key,sort_order:x.sort_order}}catch{return null}}).filter(Boolean);
+  data={content:results[0].data,services:results[1].data,reviews:results[2].data,appointments:results[3].data,team};appointmentError=null;document.querySelector('#badge').textContent=data.reviews.filter(x=>!x.is_live).length;render();if(note)toast('Dashboard refreshed')
+};
+appointmentEditor=function(a={}){overlay.innerHTML=`<div class="modal-bg"><div class="modal"><div class="modal-head"><h2>${a.id?'Edit':'Set'} appointment</h2><button class="close">×</button></div><form id="appointmentEdit"><div class="form-grid"><div class="field"><label>Client name</label><input name="client_name" required maxlength="80" value="${esc(a.client_name||'')}"></div><div class="field"><label>Phone number</label><input name="phone" type="tel" required maxlength="30" value="${esc(a.phone||'')}"></div><div class="field"><label>Date</label><input name="appointment_date" type="date" required value="${esc(a.appointment_date||'')}"></div><div class="field"><label>Time</label><input name="appointment_time" type="time" step="900" required value="${esc(String(a.appointment_time||'').slice(0,5))}"></div><div class="field"><label>Service</label><select name="service_type" required>${serviceOptions(a.service_type)}</select></div><div class="field"><label>Stylist</label><select name="stylist" required>${stylistOptions(a.stylist)}</select></div><div class="field full"><label>Status</label><select name="status"><option value="confirmed" ${a.status!=='cancelled'?'selected':''}>Confirmed</option><option value="cancelled" ${a.status==='cancelled'?'selected':''}>Cancelled</option></select></div><div class="field full"><label>Notes</label><textarea name="notes" maxlength="500">${esc(a.notes||'')}</textarea></div></div><div class="modal-actions"><button type="button" class="ghost cancel">Cancel</button><button class="primary">Save appointment</button></div></form></div></div>`;overlay.querySelector('.close').onclick=overlay.querySelector('.cancel').onclick=()=>overlay.innerHTML='';overlay.querySelector('#appointmentEdit').onsubmit=async event=>{event.preventDefault();const record=Object.fromEntries(new FormData(event.currentTarget));record.status=record.status||'confirmed';const query=a.id?db.from('appointments').update(record).eq('id',a.id):db.from('appointments').insert(record),{error}=await query;if(error)return alert(error.code==='23505'?'That stylist is already booked at that time.':error.message);overlay.innerHTML='';toast('Appointment saved');load()}};
+appointmentStatus=async function(id,status){const {error}=await db.from('appointments').update({status}).eq('id',id);if(error)return alert(error.message);toast(`Appointment ${status}`);load()};
+removeAppointment=async function(id){if(!confirm('Delete this appointment permanently?'))return;const {error}=await db.from('appointments').delete().eq('id',id);if(error)return alert(error.message);toast('Appointment deleted');load()};
+</script>
+<style>
+.appointment-filter-backdrop{display:none;position:fixed;inset:0;z-index:34;border:0;background:#2a101c80}.appointment-filter-backdrop.open{display:block}.appointment-filter-head{display:flex;align-items:center;justify-content:space-between;padding:2px 2px 10px}.appointment-filter-head strong{font:400 1.35rem Georgia,serif;color:var(--ink)}.appointment-filter-close{width:38px;height:38px;border:0;border-radius:50%;background:var(--blush);color:var(--wine);display:grid;place-items:center;font-size:1rem}.appointment-filter-field{display:grid;gap:6px;min-width:0}.appointment-filter-field>span{color:var(--muted);font-size:.68rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.appointment-filter-panel .appointment-filter-field input,.appointment-filter-panel .appointment-filter-field select{display:block;box-sizing:border-box;max-width:100%;min-width:0;width:100%;border-radius:13px;background:var(--blush);border-color:#ecc5d7}.appointment-filter-panel{border-radius:20px}.appointment-filter-panel .filter-reset{border-radius:12px;background:#fff0f6;min-height:42px}
+html[data-theme="dark"] .appointment-filter-head strong{color:#fff5fa}html[data-theme="dark"] .appointment-filter-close,html[data-theme="dark"] .appointment-filter-panel .filter-reset{background:#321723;color:#ff6bac}html[data-theme="dark"] .appointment-filter-panel .appointment-filter-field input,html[data-theme="dark"] .appointment-filter-panel .appointment-filter-field select{background:#21151b;border-color:#603047}
+@media(max-width:760px){.appointment-filter-panel{position:fixed;z-index:36;top:auto;right:10px;bottom:max(10px,env(safe-area-inset-bottom));left:10px;width:auto;max-height:calc(100dvh - 84px);overflow:auto;padding:18px 15px;border-radius:22px;box-shadow:0 25px 75px #26091466}.appointment-filter-panel input[type="date"]{-webkit-appearance:none;appearance:none;height:48px}.appointment-filter-panel select{height:48px}.appointment-filter-panel .filter-reset{width:100%}}
+</style>
+<script>
+const appointmentsManagerBeforeMobileFilter=appointmentsManager;
+appointmentsManager=function(){
+  appointmentsManagerBeforeMobileFilter();
+  const panel=document.querySelector('#appointmentFilterPanel'),button=document.querySelector('#appointmentFilterButton');
+  if(!panel||!button)return;
+  document.querySelectorAll('.appointment-filter-backdrop').forEach(x=>x.remove());
+  const backdrop=document.createElement('button');backdrop.type='button';backdrop.className='appointment-filter-backdrop';backdrop.setAttribute('aria-label','Close filters');document.body.appendChild(backdrop);
+  panel.insertAdjacentHTML('afterbegin','<div class="appointment-filter-head"><strong>Filter appointments</strong><button class="appointment-filter-close" type="button" aria-label="Close filters"><i class="fa-solid fa-xmark"></i></button></div>');
+  const labels=[['appointmentDay','Date'],['appointmentStylist','Stylist'],['appointmentType','Service'],['appointmentStatus','Status'],['appointmentSort','Order']];
+  labels.forEach(([id,title])=>{const field=document.querySelector('#'+id);if(!field)return;const wrap=document.createElement('label');wrap.className='appointment-filter-field';const caption=document.createElement('span');caption.textContent=title;field.before(wrap);wrap.append(caption,field)});
+  const closeFilters=()=>{panel.hidden=true;button.setAttribute('aria-expanded','false');backdrop.classList.remove('open');document.body.style.overflow=''};
+  const openFilters=()=>{panel.hidden=false;button.setAttribute('aria-expanded','true');backdrop.classList.add('open');if(matchMedia('(max-width:760px)').matches)document.body.style.overflow='hidden'};
+  button.onclick=()=>panel.hidden?openFilters():closeFilters();backdrop.onclick=closeFilters;panel.querySelector('.appointment-filter-close').onclick=closeFilters;
+  const escape=event=>{if(event.key==='Escape'&&!panel.hidden)closeFilters()};document.addEventListener('keydown',escape,{once:false});
+};
+</script>
 </body></html>
