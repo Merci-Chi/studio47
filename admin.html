@@ -389,7 +389,7 @@ renderAppointmentRows=function(){
   host.innerHTML=[...groups.entries()].map(([date,items])=>`<section class="appointment-day"><header class="appointment-day-head"><i class="fa-regular fa-calendar"></i><h2>${esc(formatDayHeading(date))}</h2><span class="appointment-day-count">${items.length}</span></header><div class="appointment-list">${items.map(a=>{const clock=formatClock(a.appointment_time),state=a.status||'pending';return `<article class="appointment-item"><div class="appointment-time"><strong>${esc(clock.time)}</strong><span>${clock.ampm}</span></div><div class="appointment-with"><strong>With ${esc(a.stylist||'No preference')}</strong><span>${esc(a.service_type||'Appointment')}</span></div><div class="appointment-client"><strong>${esc(a.client_name||'Client')}</strong><span>${esc(a.phone||'No phone')}</span></div><a class="appointment-call" href="tel:${esc(a.phone||'')}" aria-label="Call ${esc(a.client_name||'client')}"><i class="fa-solid fa-phone"></i></a><details class="appointment-item-actions"><summary><i class="fa-solid fa-ellipsis"></i></summary><div class="appointment-action-menu"><button type="button" onclick="appointmentEditor(data.appointments.find(x=>x.id==='${a.id}'))">Edit</button>${state!=='confirmed'?`<button type="button" onclick="appointmentStatus('${a.id}','confirmed')">Confirm</button>`:''}${state!=='cancelled'?`<button type="button" onclick="appointmentStatus('${a.id}','cancelled')">Cancel</button>`:''}<button type="button" class="delete" onclick="removeAppointment('${a.id}')">Delete</button></div></details></article>`}).join('')}</div></section>`).join('');
 };
 
-boot();
+// Startup runs after all dashboard enhancements are defined.
 </script>
 <script>
 /* ===== Appointment UX improvements: calendar picker, Apple-style time wheels, team-aware filtering ===== */
@@ -1006,5 +1006,6 @@ async function moveService(id,direction){
   const results=await Promise.all(ordered.map((item,position)=>db.from('services').update({sort_order:position+1}).eq('id',item.id))),error=results.find(result=>result.error)?.error;
   if(error)return alert(error.message);toast('Service order updated');load();
 }
+boot();
 </script>
 </body></html>
