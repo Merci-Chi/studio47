@@ -842,6 +842,14 @@ renderAppointmentRows=function(){
     card.setAttribute('aria-expanded',String(card.classList.contains('expanded')));
   };
 
+  window.addAppointmentToCalendar = function(id,event){
+    event?.stopPropagation();
+    const appointment=data.appointments.find(item=>item.id===id);if(!appointment)return;
+    const escapeIcs=value=>String(value||'').replace(/\\/g,'\\\\').replace(/\r?\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;');
+    const localTime=(day,timeValue,minutes=0)=>{const [year,month,datePart]=day.split('-').map(Number),[hour,minute]=String(timeValue).slice(0,5).split(':').map(Number),value=new Date(year,month-1,datePart,hour,minute+minutes);return `${value.getFullYear()}${String(value.getMonth()+1).padStart(2,'0')}${String(value.getDate()).padStart(2,'0')}T${String(value.getHours()).padStart(2,'0')}${String(value.getMinutes()).padStart(2,'0')}00`};
+    const start=localTime(appointment.appointment_date,appointment.appointment_time),end=localTime(appointment.appointment_date,appointment.appointment_time,60),stamp=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z'),lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Studio 47 Hair Salon//Appointments//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','BEGIN:VEVENT',`UID:studio47-${appointment.id}@studio47hairsalon.com`,`DTSTAMP:${stamp}`,`DTSTART;TZID=America/Los_Angeles:${start}`,`DTEND;TZID=America/Los_Angeles:${end}`,`SUMMARY:${escapeIcs(`${appointment.service_type||'Appointment'} — ${appointment.client_name||'Client'}`)}`,`DESCRIPTION:${escapeIcs(`Client: ${appointment.client_name||'Client'}\nPhone: ${appointment.phone||'No phone'}\nStylist: ${appointment.stylist||'No preference'}${appointment.notes?`\nNotes: ${appointment.notes}`:''}`)}`,`LOCATION:${escapeIcs('Studio 47 Hair Salon, 1449 N Jones Blvd, Las Vegas, NV 89108')}`,'BEGIN:VALARM','TRIGGER:-PT2H','ACTION:DISPLAY','DESCRIPTION:Upcoming Studio 47 appointment','END:VALARM','END:VEVENT','END:VCALENDAR',''],blob=new Blob([lines.join('\r\n')],{type:'text/calendar;charset=utf-8'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`studio-47-${appointment.appointment_date}-${String(appointment.client_name||'appointment').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}.ics`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  };
+
   window.renderAppointmentRows = function(){
     const get=id=>document.querySelector('#'+id)?.value||'';
     const day=get('appointmentDay'),stylist=get('appointmentStylist'),type=get('appointmentType'),
@@ -897,6 +905,7 @@ renderAppointmentRows=function(){
             <strong>${esc(statusLabel)}</strong>
           </div>
           <div class="appointment-detail-actions">
+            <button class="detail-primary" type="button" onclick="addAppointmentToCalendar('${a.id}',event)"><i class="fa-regular fa-calendar-plus"></i> Add to calendar</button>
             <button class="detail-secondary" type="button" onclick="event.stopPropagation();appointmentEditor(data.appointments.find(x=>x.id==='${a.id}'))">Edit</button>
             ${state!=='confirmed'?`<button class="detail-primary" type="button" onclick="event.stopPropagation();appointmentStatus('${a.id}','confirmed')">Confirm</button>`:''}
             ${state!=='cancelled'?`<button class="detail-secondary" type="button" onclick="event.stopPropagation();appointmentStatus('${a.id}','cancelled')">Cancel</button>`:''}
