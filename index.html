@@ -577,6 +577,35 @@ section{padding:66px 0}
     loadLive=async function(){await loadLiveBeforeGalleryReset();resetGalleryPosition();requestAnimationFrame(resetGalleryPosition)};
     loadLive();
   </script>
+  <style>
+    .notification-opt-in{display:none;width:100%;margin-top:10px;border:1px solid #d30b78;border-radius:12px;padding:12px 15px;background:#fff0f6;color:#69043f;font-weight:900;cursor:pointer}.notification-opt-in.show{display:flex;align-items:center;justify-content:center;gap:9px}.notification-opt-in:disabled{opacity:.65;cursor:wait}.notification-note{margin:8px 0 0;color:#6f5362;font-size:.76rem;text-align:center}
+  </style>
+  <script>
+  (()=>{
+    const VAPID_PUBLIC_KEY='BC-WYPiap35C5vlcGK6XXDRCcb9GJtqDM6JmP05emTQiFZFkW_jaZaHrwP00f1j1MhGwVweJq5QI66jYDJVaf58';
+    const form=document.querySelector('#bookingForm'),message=document.querySelector('#bookingMessage');if(!form||!message)return;
+    const button=document.createElement('button');button.type='button';button.className='notification-opt-in';button.innerHTML='<i class="fa-regular fa-bell"></i> Enable appointment reminders';
+    const note=document.createElement('p');note.className='notification-note';form.querySelector('.booking-submit').append(button,note);
+    let booking=null;
+    const decode=value=>{const padding='='.repeat((4-value.length%4)%4),base64=(value+padding).replace(/-/g,'+').replace(/_/g,'/'),raw=atob(base64);return Uint8Array.from([...raw].map(char=>char.charCodeAt(0)))};
+    form.addEventListener('submit',()=>{const values=Object.fromEntries(new FormData(form));booking={client_name:values.client_name,phone:values.phone,appointment_date:values.appointment_date,appointment_time:values.appointment_time}},{capture:true});
+    new MutationObserver(()=>{if(message.classList.contains('success')&&booking){button.classList.add('show');note.textContent='Get reminders 24 hours and 2 hours before your appointment.'}}).observe(message,{attributes:true,childList:true});
+    button.addEventListener('click',async()=>{
+      if(!('serviceWorker'in navigator)||!('PushManager'in window)||!('Notification'in window)){note.textContent='Notifications are not supported by this browser.';return}
+      const ios=/iPhone|iPad|iPod/i.test(navigator.userAgent),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+      if(ios&&!standalone){note.textContent='On iPhone: tap Share, Add to Home Screen, then open the Studio 47 app and enable reminders.';return}
+      button.disabled=true;note.textContent='Enabling reminders…';
+      try{
+        const permission=await Notification.requestPermission();if(permission!=='granted')throw new Error('Notification permission was not allowed.');
+        const registration=await navigator.serviceWorker.register('service-worker.js');await navigator.serviceWorker.ready;
+        let subscription=await registration.pushManager.getSubscription();if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:decode(VAPID_PUBLIC_KEY)});
+        const {error}=await db.rpc('save_appointment_push_subscription',{p_endpoint:subscription.endpoint,p_subscription:subscription.toJSON(),p_client_name:booking.client_name,p_phone:booking.phone,p_appointment_date:booking.appointment_date,p_appointment_time:booking.appointment_time});if(error)throw error;
+        button.innerHTML='<i class="fa-solid fa-check"></i> Appointment reminders enabled';note.textContent='You will be notified 24 hours and 2 hours before your appointment.';
+      }catch(error){note.textContent=error?.message||'Reminders could not be enabled.';button.disabled=false}
+    });
+    if('serviceWorker'in navigator)navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+  })();
+  </script>
   <script>
   (()=>{
     const form=document.querySelector('#bookingForm'),service=document.querySelector('#bookingService'),stylist=document.querySelector('#bookingStylist'),date=document.querySelector('#bookingDate'),time=document.querySelector('#bookingTime'),message=document.querySelector('#bookingMessage');
