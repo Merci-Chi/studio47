@@ -1109,4 +1109,63 @@ function servicesManagerV2(){
   document.querySelectorAll('[data-service-delete]').forEach(button=>button.onclick=()=>remove(button.dataset.serviceDelete));
 }
 </script>
+<style>
+/* Mobile fit pass: keep every admin surface inside the viewport. */
+@media(max-width:760px){
+  html,body,#root,.app,.app>main,#view{width:100%;max-width:100%;min-width:0}
+  body{overflow-x:hidden}
+  .sidebar{width:100%;max-width:100%;overflow:hidden;padding:12px var(--admin-gutter) 10px}
+  .brand{min-width:0}.brand>div:last-child{min-width:0}.brand strong,.brand small{overflow-wrap:anywhere}
+  .sidebar .nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;gap:6px;width:100%}
+  .sidebar .nav button,.sidebar .nav a{min-width:0;width:100%;padding:9px 8px;gap:7px;overflow:hidden}
+  .sidebar .nav button{white-space:normal}.sidebar .nav a{white-space:normal}
+  .sidebar .nav .ico{flex:0 0 24px}.sidebar .nav .badge{flex:0 0 auto}
+  .topbar{position:sticky;top:0;z-index:30;height:58px;padding:0;background:#f8f3f6}
+  .crumb{min-width:0;max-width:none;flex:1}.top-actions{flex:0 0 auto}
+  .welcome,.page-head{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+  .welcome .date-chip,.page-head>button{width:100%;max-width:100%;min-height:44px}
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .layout,.help-layout,.services-v2-grid{grid-template-columns:minmax(0,1fr)}
+  .card,.review-summary,.services-v2-summary,.help-form,.help-request-card{max-width:100%;overflow:hidden}
+  .card-head,.services-v2-summary{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+  .card-head>button,.card-head>.primary,.card-head>.ghost{width:100%;min-height:42px}
+  .table-wrap{overflow:visible;max-width:100%}
+  .table-wrap table,#reviewRows table,body[data-page="services"] table{display:block;width:100%;min-width:0!important;table-layout:auto}
+  .table-wrap thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .table-wrap tbody{display:grid;gap:10px;padding:10px}
+  .table-wrap tr{display:grid;width:100%;min-width:0;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:0 6px 18px #46082b0a}
+  .table-wrap td,#reviewRows td{display:grid;grid-template-columns:minmax(92px,34%) minmax(0,1fr);align-items:start;gap:10px;width:100%;min-width:0;padding:8px 0!important;border:0;border-bottom:1px solid #f1e5eb;white-space:normal!important;overflow-wrap:anywhere}
+  .table-wrap td:last-child{border-bottom:0}
+  .table-wrap td::before{content:attr(data-label);color:var(--muted);font-size:.62rem;font-weight:900;letter-spacing:.07em;text-transform:uppercase}
+  .table-wrap td>*{min-width:0;max-width:100%}
+  #reviewRows .cell strong{white-space:normal}.preview-cell{align-items:flex-start;min-width:0}.gallery-preview{width:58px;height:46px;flex:0 0 58px}
+  .row-actions,#reviewRows .row-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;width:100%}
+  .row-actions button,#reviewRows .row-actions button{width:100%;min-width:0;min-height:40px;white-space:normal}
+  .modal-bg{align-items:end;padding:0}.modal{width:100%;max-width:100%;max-height:92dvh;padding:20px 15px max(18px,env(safe-area-inset-bottom));border-radius:20px 20px 0 0}
+  .form-grid,.help-type-grid,.review-filters,.appointment-filters{grid-template-columns:minmax(0,1fr)}
+  .field,.field.full,.money-input{min-width:0;max-width:100%}.field input,.field select,.field textarea{width:100%;min-width:0}
+  .toast{max-width:calc(100% - 20px)}
+}
+@media(max-width:390px){
+  .sidebar .nav{grid-template-columns:1fr}
+  .metrics{grid-template-columns:1fr}
+  .table-wrap td,#reviewRows td{grid-template-columns:1fr;gap:4px}
+  .service-v2-top{grid-template-columns:36px minmax(0,1fr)}
+  .service-v2-price{grid-column:2;white-space:normal}
+}
+</style>
+<script>
+/* Add accessible labels so desktop tables become readable mobile cards. */
+function labelResponsiveTables(scope=document){
+  scope.querySelectorAll('.table-wrap table').forEach(table=>{
+    const labels=[...table.querySelectorAll('thead th')].map(cell=>cell.textContent.trim());
+    table.querySelectorAll('tbody tr').forEach(row=>[...row.children].forEach((cell,index)=>cell.dataset.label=labels[index]||`Field ${index+1}`));
+  });
+}
+const responsiveTableObserver=new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(node=>{
+  if(node.nodeType===1)labelResponsiveTables(node.matches?.('.table-wrap')?node:node);
+})));
+responsiveTableObserver.observe(document.querySelector('#view'),{childList:true,subtree:true});
+labelResponsiveTables();
+</script>
 </body></html>
