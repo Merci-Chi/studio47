@@ -872,9 +872,7 @@ renderAppointmentRows=function(){
     const appointmentCard=a=>{
       const clock=formatClock(a.appointment_time),state=a.status||'pending';
       const statusLabel=state.charAt(0).toUpperCase()+state.slice(1);
-      return `<article class="appointment-item" tabindex="0" role="button" aria-expanded="false"
-        onclick="toggleAppointmentCard(this,event)"
-        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleAppointmentCard(this)}">
+      return `<article class="appointment-item" data-appointment-id="${a.id}">
         <div class="appointment-time">
           <strong>${esc(clock.time)}</strong><span>${clock.ampm}</span>
         </div>
@@ -886,31 +884,10 @@ renderAppointmentRows=function(){
           <strong>${esc(a.client_name||'Client')}</strong>
           <span>${esc(a.phone||'No phone')}</span>
         </div>
-        <a class="appointment-call" href="tel:${esc(a.phone||'')}" aria-label="Call ${esc(a.client_name||'client')}">
-          <i class="fa-solid fa-phone"></i>
-        </a>
-        <div class="appointment-expand-icon" aria-hidden="true"><i class="fa-solid fa-chevron-down"></i></div>
-
-        <div class="appointment-extra">
-          <div class="appointment-detail-box">
-            <small>Client</small>
-            <strong>${esc(a.client_name||'Client')}</strong>
-          </div>
-          <div class="appointment-detail-box">
-            <small>Phone</small>
-            <a href="tel:${esc(a.phone||'')}">${esc(a.phone||'No phone')}</a>
-          </div>
-          <div class="appointment-detail-box status-box">
-            <small>Status</small>
-            <strong>${esc(statusLabel)}</strong>
-          </div>
-          <div class="appointment-detail-actions">
-            <button class="detail-primary" type="button" onclick="addAppointmentToCalendar('${a.id}',event)"><i class="fa-regular fa-calendar-plus"></i> Add to calendar</button>
-            <button class="detail-secondary" type="button" onclick="event.stopPropagation();appointmentEditor(data.appointments.find(x=>x.id==='${a.id}'))">Edit</button>
-            ${state!=='confirmed'?`<button class="detail-primary" type="button" onclick="event.stopPropagation();appointmentStatus('${a.id}','confirmed')">Confirm</button>`:''}
-            ${state!=='cancelled'?`<button class="detail-secondary" type="button" onclick="event.stopPropagation();appointmentStatus('${a.id}','cancelled')">Cancel</button>`:''}
-            <button class="detail-danger" type="button" onclick="event.stopPropagation();removeAppointment('${a.id}')">Delete</button>
-          </div>
+        <div class="appointment-quick-actions">
+          <a class="appointment-call" href="tel:${esc(a.phone||'')}" aria-label="Call ${esc(a.client_name||'client')}"><i class="fa-solid fa-phone"></i></a>
+          <button class="appointment-calendar" type="button" onclick="addAppointmentToCalendar('${a.id}',event)" aria-label="Add ${esc(a.client_name||'appointment')} to calendar"><i class="fa-regular fa-calendar-plus"></i></button>
+          <button class="appointment-edit" type="button" onclick="openAppointmentActions('${a.id}',event)">Edit</button>
         </div>
       </article>`;
     };
@@ -1171,13 +1148,34 @@ labelResponsiveTables();
 <style>
   .readonly-note{margin:0 0 14px;padding:12px 14px;border:1px solid var(--line);border-radius:11px;background:var(--blush);color:var(--muted);font-size:.78rem;font-weight:700}
   .linked-email{display:block;margin-top:3px;color:var(--muted);font-size:.7rem}
+  .appointment-item{grid-template-columns:105px minmax(180px,.9fr) minmax(220px,1.1fr) auto!important;cursor:default!important}
+  .appointment-quick-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;min-width:0}
+  .appointment-calendar,.appointment-edit{height:42px;border-radius:12px;display:grid;place-items:center}
+  .appointment-calendar{width:42px;border:0;background:#fff0f6;color:var(--pink);font-size:1rem}
+  .appointment-edit{min-width:58px;padding:0 13px;border:1px solid var(--line);background:#fff;color:var(--wine);font-size:.72rem;font-weight:900}
+  .appointment-actions-modal p{margin:0 0 18px;color:var(--muted)}
+  .appointment-actions-grid{display:grid;gap:9px}.appointment-actions-grid button{width:100%;min-height:44px}
+  @media(max-width:760px){
+    .appointment-item{grid-template-columns:64px minmax(0,1fr) auto!important}
+    .appointment-client{display:none!important}.appointment-quick-actions{display:flex!important;gap:5px}
+    .appointment-call,.appointment-calendar{display:grid!important;width:34px!important;height:34px!important;border-radius:9px!important}
+    .appointment-edit{height:34px;min-width:45px;padding:0 8px;font-size:.64rem}
+  }
+  @media(max-width:420px){.appointment-item{grid-template-columns:58px minmax(0,1fr) auto!important}.appointment-call,.appointment-calendar{width:31px!important;height:31px!important}.appointment-edit{height:31px;min-width:40px;padding:0 6px}}
 </style>
 <script>
 /* Role-aware access. Database RLS remains the security boundary. */
 const OWNER_EMAIL='marielenaespino78@gmail.com';
 let staffProfile=null;
+let accessLoadSequence=0;
 const currentEmail=()=>String(session?.user?.email||'').trim().toLowerCase();
 const isOwner=()=>currentEmail()===OWNER_EMAIL&&staffProfile?.role==='owner';
+
+window.openAppointmentActions=function(id,event){
+  event?.stopPropagation();const appointment=data.appointments.find(item=>item.id===id);if(!appointment)return;
+  overlay.innerHTML=`<div class="modal-bg"><div class="modal appointment-actions-modal"><div class="modal-head"><h2>Appointment actions</h2><button class="close" type="button">×</button></div><p>${esc(appointment.client_name||'Client')} · ${esc(formatAppointment(appointment))} · with ${esc(appointment.stylist||'No preference')}</p><div class="appointment-actions-grid"><button class="primary" id="editAppointmentAction" type="button"><i class="fa-solid fa-pen"></i> Edit appointment</button>${appointment.status!=='cancelled'?'<button class="ghost" id="cancelAppointmentAction" type="button"><i class="fa-solid fa-ban"></i> Cancel appointment</button>':''}<button class="danger" id="deleteAppointmentAction" type="button"><i class="fa-solid fa-trash"></i> Delete appointment</button></div></div></div>`;
+  overlay.querySelector('.close').onclick=()=>overlay.innerHTML='';overlay.querySelector('#editAppointmentAction').onclick=()=>appointmentEditor(appointment);const cancel=overlay.querySelector('#cancelAppointmentAction');if(cancel)cancel.onclick=()=>{overlay.innerHTML='';appointmentStatus(id,'cancelled')};overlay.querySelector('#deleteAppointmentAction').onclick=()=>{overlay.innerHTML='';removeAppointment(id)};
+};
 
 forgotPassword=function(){
   root.innerHTML=`<div class="login-wrap"><form class="login-card" id="forgot"><div class="login-brand"><div class="mark">47</div><div><h1>Recover access</h1><span class="eyebrow">Reset password</span></div></div><p>Enter the real personal email connected to your account. Studio 47 work addresses cannot receive reset links.</p><div id="err"></div><div class="stack"><input name="email" type="email" required autocomplete="email" inputmode="email" placeholder="Personal email (example@gmail.com)"><button class="primary">Send reset link</button><button type="button" class="auth-link" id="backLogin">Back to sign in</button></div></form></div>`;
@@ -1192,7 +1190,8 @@ forgotPassword=function(){
 };
 
 app=function(){
-  pageName='appointments';const owner=isOwner();
+  const owner=isOwner();pageName=owner?'overview':'appointments';
+  if(location.protocol!=='file:')history.replaceState(null,'',`${location.pathname}${location.search}#${pageName}`);
   const workspace=owner?`<button data-page="overview"><span class="ico"><i class="fa-solid fa-house"></i></span>Overview</button><button data-page="reviews"><span class="ico"><i class="fa-solid fa-star"></i></span>Reviews<span class="badge" id="badge">0</span></button><button data-page="content"><span class="ico"><i class="fa-regular fa-images"></i></span>Gallery</button><button data-page="services"><span class="ico"><i class="fa-solid fa-scissors"></i></span>Menu &amp; Pricing</button><button data-page="appointments"><span class="ico"><i class="fa-regular fa-calendar-check"></i></span>Appointments</button><button data-page="team"><span class="ico"><i class="fa-solid fa-user-group"></i></span>Team</button>`:`<button data-page="appointments"><span class="ico"><i class="fa-regular fa-calendar-check"></i></span>Appointments</button><button data-page="reviews"><span class="ico"><i class="fa-solid fa-star"></i></span>Reviews</button><button data-page="services"><span class="ico"><i class="fa-solid fa-scissors"></i></span>Menu &amp; Pricing</button>`;
   root.innerHTML=`<div class="app"><aside class="sidebar" id="mobileDrawer"><div class="brand"><div class="mark">47</div><div><strong>Studio 47</strong><small>${owner?'Owner':'Team member'}</small></div></div><div class="nav-label">Workspace</div><nav class="nav">${workspace}</nav><div class="nav-label">Website</div><nav class="nav"><button data-page="help"><span class="ico"><i class="fa-regular fa-circle-question"></i></span>Help &amp; Requests</button><a href="index.html" target="_blank"><span class="ico"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>View site</a><button id="out"><span class="ico"><i class="fa-solid fa-right-from-bracket"></i></span>Sign out</button></nav><div class="sidebar-card"><small>Signed in as</small><strong>${esc(staffProfile?.stylist_name||session.user.email)}</strong><p>${esc(session.user.email)}</p></div></aside><button class="mobile-nav-backdrop" id="mobileNavBackdrop" aria-label="Close menu"></button><main><header class="topbar"><button class="icon-btn mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-label="Open menu" aria-expanded="false"><i class="fa-solid fa-bars"></i><i class="fa-solid fa-xmark"></i></button><div class="crumb">Studio 47 / <strong id="crumb">Appointments</strong></div><div class="top-actions"><input class="search" id="search" placeholder="Search current page…">${languageControl()}<button class="icon-btn" id="refresh"><i class="fa-solid fa-rotate"></i></button><button class="avatar">${esc(currentEmail().slice(0,2).toUpperCase())}</button></div></header><div id="view"><div class="loading">Loading…</div></div></main></div>`;
   const shell=document.querySelector('.app'),toggle=document.querySelector('#mobileMenuToggle'),backdrop=document.querySelector('#mobileNavBackdrop'),closeDrawer=()=>{shell.classList.remove('drawer-open');toggle.setAttribute('aria-expanded','false')};
@@ -1203,12 +1202,15 @@ app=function(){
 };
 
 load=async function(note=false){
+  const requestId=++accessLoadSequence;
   const profileResult=await db.from('staff_profiles').select('user_id,work_email,recovery_email,stylist_name,team_member_id,role,active').eq('user_id',session.user.id).maybeSingle();
+  if(requestId!==accessLoadSequence)return;
   if(profileResult.error||!profileResult.data?.active){document.querySelector('#view').innerHTML='<div class="page-head"><div><div class="eyebrow">Access</div><h1>Account not linked</h1><p>Ask Maria Elena to link this login to an active team member.</p></div></div>';return}
   staffProfile=profileResult.data;
   const queries=[db.from('site_content').select('*').order('sort_order'),db.from('services').select('*').order('sort_order'),db.from('reviews').select('*').order('created_at',{ascending:false}),db.from('appointments').select('*').order('appointment_date').order('appointment_time')];
   if(isOwner())queries.push(db.from('staff_profiles').select('user_id,work_email,recovery_email,stylist_name,team_member_id,role,active').order('stylist_name'));
   const results=await Promise.all(queries),error=results.find(result=>result.error)?.error;if(error){document.querySelector('#view').innerHTML=`<div class="page-head"><div><div class="eyebrow">Access</div><h1>Unable to load data</h1><p>${esc(error.message)}</p></div></div>`;return}
+  if(requestId!==accessLoadSequence)return;
   const team=results[0].data.filter(item=>item.section==='team').map(item=>{try{return {...JSON.parse(item.content_value||'{}'),id:item.id,content_key:item.content_key,sort_order:item.sort_order}}catch{return null}}).filter(Boolean);
   data={content:results[0].data,services:results[1].data,reviews:results[2].data,appointments:results[3].data,team,staffProfiles:results[4]?.data||[staffProfile]};
   const badge=document.querySelector('#badge');if(badge)badge.textContent=data.reviews.filter(item=>!item.is_live).length;render();if(note)toast('Dashboard refreshed');
