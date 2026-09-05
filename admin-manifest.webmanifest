@@ -1,0 +1,11 @@
+{
+  "name": "Studio 47",
+  "short_name": "Studio 47",
+  "id": "./admin.html",
+  "start_url": "./admin.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8f3f6",
+  "theme_color": "#580330",
+  "icons": [{"src":"studio47-app-icon.png","sizes":"any","type":"image/png","purpose":"any maskable"}]
+}
