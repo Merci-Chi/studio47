@@ -1032,4 +1032,32 @@ boot();
 .help-request-delete{margin-left:2px;width:30px;height:30px;border:0;border-radius:9px;background:#fff0f2;color:var(--red);display:grid;place-items:center}.help-request-delete:hover{background:#ffdfe5}.help-request-top .help-priority{margin-left:auto}html[data-theme="dark"] .help-request-delete{background:#421c28;color:#ff8ca0}
 @media(max-width:900px){.help-layout{grid-template-columns:1fr}}@media(max-width:760px){.help-page{padding:20px 5px}.help-heading h1{font-size:2.65rem}.help-form{padding:15px}.help-type-grid{grid-template-columns:1fr}.help-type span{min-height:92px}.help-form .form-grid{grid-template-columns:1fr}.help-form .field.full{grid-column:auto}}
 </style>
+<style>
+/* Final responsive alignment pass */
+:root{--admin-width:1280px;--admin-gutter:clamp(18px,3vw,38px)}
+.app>main{padding-left:var(--admin-gutter);padding-right:var(--admin-gutter)}
+.topbar,#view{width:min(100%,var(--admin-width));margin-left:auto;margin-right:auto}
+#view>*{min-width:0}.welcome,.page-head{align-items:flex-end}.welcome>div,.page-head>div{min-width:0}
+.metrics{align-items:stretch}.metric{height:100%}.layout>*{min-width:0}.card{min-width:0}
+.card-head{align-items:center}.card-head>div{min-width:0}.card-head h2,.card-head p{overflow-wrap:anywhere}
+.form-grid>*{min-width:0}.field input,.field select,.field textarea{max-width:100%;min-width:0}
+.help-page{width:100%;max-width:none}.help-layout>*{min-width:0}.help-type span{height:100%}.help-request-top{align-items:center}.help-request-card{min-width:0}.help-request-card h3,.help-request-card p{overflow-wrap:anywhere}
+.appointment-filter-panel{max-width:100%}.appointment-filter-head{align-items:center}.row-actions{align-items:center}
+@media(max-width:1080px) and (min-width:761px){:root{--admin-gutter:24px}.help-layout{grid-template-columns:1fr}.page-head,.welcome{gap:18px}}
+@media(max-width:760px){
+  :root{--admin-gutter:12px}.app>main{margin-left:0!important;padding:0 var(--admin-gutter) 28px}
+  .topbar,#view{width:100%}.topbar{gap:10px}.top-actions{margin-left:auto;align-items:center}
+  .welcome,.page-head{align-items:flex-start;width:100%}.welcome>div,.page-head>div{width:100%}
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.metric{min-width:0}.metric-top{align-items:flex-start}.metric-top>span:first-child{overflow-wrap:anywhere}
+  .card-head{align-items:flex-start;flex-wrap:wrap}.card-head>div{flex:1 1 180px}.card-head>button{flex:0 0 auto}
+  .help-page{padding-left:0;padding-right:0}.help-heading{padding:0 2px}.help-layout{gap:14px}.help-history{min-width:0}
+  .help-history-head{padding:0 2px}.help-request-top{flex-wrap:wrap}.help-request-delete{margin-left:0}
+  .modal{width:100%}.appointment-filter-panel{right:var(--admin-gutter);left:var(--admin-gutter)}
+}
+@media(max-width:410px){
+  :root{--admin-gutter:10px}.metrics{grid-template-columns:1fr}.welcome h1,.page-head h1{font-size:2.15rem}
+  .help-heading h1{font-size:2.35rem}.help-type span{grid-template-columns:34px minmax(0,1fr);padding:14px}
+  .card-head>button{width:100%}.queue-item{grid-template-columns:38px minmax(0,1fr)}
+}
+</style>
 </body></html>
