@@ -1069,4 +1069,19 @@ boot();
   .card-head>button{width:100%}.queue-item{grid-template-columns:38px minmax(0,1fr)}
 }
 </style>
+<script>
+/* Persistent team ordering. Requires the reorder_team_member SQL function. */
+const orderedTeam=()=>[...(data.team||[])].sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.id).localeCompare(String(b.id)));
+async function moveTeamMember(id,direction){
+  const {error}=await db.rpc('reorder_team_member',{p_member_id:id,p_direction:direction});
+  if(error)return alert(`Team order could not be updated: ${error.message}`);
+  toast('Team order updated');
+  await load();
+}
+teamManager=function(){
+  const team=orderedTeam();
+  document.querySelector('#view').innerHTML=`<section class="page-head"><div><div class="eyebrow">Staff schedule</div><h1>Team</h1><p>Manage team members, schedules, and the order shown to clients.</p></div><button class="primary" id="addTeam"><i class="fa-solid fa-plus"></i> Add team member</button></section><article class="card"><div class="table-wrap">${team.length?`<table><thead><tr><th>Order</th><th>Name</th><th>Working days</th><th>Hours</th><th>Actions</th></tr></thead><tbody>${team.map((member,index)=>`<tr><td><div class="row-actions"><button class="ghost" type="button" onclick="moveTeamMember('${member.id}',-1)" aria-label="Move ${esc(member.name)} up" ${index===0?'disabled':''}>↑</button><button class="ghost" type="button" onclick="moveTeamMember('${member.id}',1)" aria-label="Move ${esc(member.name)} down" ${index===team.length-1?'disabled':''}>↓</button></div></td><td><strong>${esc(member.name)}</strong></td><td>${(member.working_days||[]).map(day=>weekDays[Number(day)].slice(0,3)).join(', ')||'No days selected'}</td><td>${esc(member.start_time||'—')} – ${esc(member.end_time||'—')}</td><td><div class="row-actions"><button class="ghost" type="button" onclick="teamEditor(data.team.find(item=>item.id==='${member.id}'))">Edit</button><button class="danger" type="button" onclick="removeTeam('${member.id}')">Delete</button></div></td></tr>`).join('')}</tbody></table>`:'<div class="empty">No team members yet.</div>'}</div></article>`;
+  document.querySelector('#addTeam').onclick=()=>teamEditor();
+};
+</script>
 </body></html>
