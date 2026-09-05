@@ -659,8 +659,11 @@ section{padding:66px 0}
     .booking-dialog{margin:auto}.booking-form{align-items:start}.booking-field{min-width:0}.booking-submit{align-self:end}
     footer .shell{width:min(var(--content-width),calc(100% - (var(--page-gutter) * 2)))}
     /* Keep all visit actions together on desktop. */
-    .visit .actions{display:flex;flex-wrap:nowrap;gap:10px}
-    .visit .actions .button{flex:1 1 0;min-width:0;padding-left:8px;padding-right:8px;white-space:nowrap;font-size:.78rem}
+    /* V14: three compact, equal visit buttons that cannot widen the page. */
+    .visitgrid{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:clamp(24px,4vw,60px)}
+    .visit .actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%;max-width:100%}
+    .visit .actions .button{display:flex;align-items:center;justify-content:center;min-width:0;max-width:100%;min-height:52px;padding:12px 10px;gap:10px;white-space:normal;overflow-wrap:normal;font-size:clamp(.86rem,1.15vw,.96rem);line-height:1.2}
+    .visit .actions .button i{display:inline-grid;place-items:center;flex:0 0 1.2em;width:1.2em;height:1.2em;margin:0;font-size:1em;line-height:1;vertical-align:middle}
     @media(max-width:820px){
       .heading{grid-template-columns:1fr;gap:12px;align-items:start}.heading p{justify-self:start;max-width:620px;margin-top:0}
       .hero-copy{width:min(100%,760px);padding-left:var(--page-gutter);padding-right:var(--page-gutter)}
