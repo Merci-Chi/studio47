@@ -1168,4 +1168,80 @@ const responsiveTableObserver=new MutationObserver(records=>records.forEach(reco
 responsiveTableObserver.observe(document.querySelector('#view'),{childList:true,subtree:true});
 labelResponsiveTables();
 </script>
+<style>
+  .readonly-note{margin:0 0 14px;padding:12px 14px;border:1px solid var(--line);border-radius:11px;background:var(--blush);color:var(--muted);font-size:.78rem;font-weight:700}
+  .linked-email{display:block;margin-top:3px;color:var(--muted);font-size:.7rem}
+</style>
+<script>
+/* Role-aware access. Database RLS remains the security boundary. */
+const OWNER_EMAIL='marielenaespino78@gmail.com';
+let staffProfile=null;
+const currentEmail=()=>String(session?.user?.email||'').trim().toLowerCase();
+const isOwner=()=>currentEmail()===OWNER_EMAIL&&staffProfile?.role==='owner';
+
+forgotPassword=function(){
+  root.innerHTML=`<div class="login-wrap"><form class="login-card" id="forgot"><div class="login-brand"><div class="mark">47</div><div><h1>Recover access</h1><span class="eyebrow">Reset password</span></div></div><p>Enter the real personal email connected to your account. Studio 47 work addresses cannot receive reset links.</p><div id="err"></div><div class="stack"><input name="email" type="email" required autocomplete="email" inputmode="email" placeholder="Personal email (example@gmail.com)"><button class="primary">Send reset link</button><button type="button" class="auth-link" id="backLogin">Back to sign in</button></div></form></div>`;
+  document.querySelector('#backLogin').onclick=login;
+  document.querySelector('#forgot').onsubmit=async event=>{
+    event.preventDefault();const form=event.currentTarget,email=String(new FormData(form).get('email')||'').trim().toLowerCase(),err=document.querySelector('#err'),button=form.querySelector('.primary');err.innerHTML='';
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return err.innerHTML='<div class="error">Enter a valid personal email address.</div>';
+    if(email.endsWith('@studio47.com'))return err.innerHTML='<div class="error">Use your real personal email, not your @studio47.com work address.</div>';
+    button.disabled=true;button.textContent='Sending…';const redirectTo=location.origin+location.pathname,{error}=await db.auth.resetPasswordForEmail(email,{redirectTo});button.disabled=false;button.textContent='Send reset link';
+    err.innerHTML=error?`<div class="error">${esc(error.message)}</div>`:'<div class="auth-success">If this personal email is connected to an account, a reset link will arrive shortly.</div>';
+  };
+};
+
+app=function(){
+  pageName='appointments';const owner=isOwner();
+  const workspace=owner?`<button data-page="overview"><span class="ico"><i class="fa-solid fa-house"></i></span>Overview</button><button data-page="reviews"><span class="ico"><i class="fa-solid fa-star"></i></span>Reviews<span class="badge" id="badge">0</span></button><button data-page="content"><span class="ico"><i class="fa-regular fa-images"></i></span>Gallery</button><button data-page="services"><span class="ico"><i class="fa-solid fa-scissors"></i></span>Menu &amp; Pricing</button><button data-page="appointments"><span class="ico"><i class="fa-regular fa-calendar-check"></i></span>Appointments</button><button data-page="team"><span class="ico"><i class="fa-solid fa-user-group"></i></span>Team</button>`:`<button data-page="appointments"><span class="ico"><i class="fa-regular fa-calendar-check"></i></span>Appointments</button><button data-page="reviews"><span class="ico"><i class="fa-solid fa-star"></i></span>Reviews</button><button data-page="services"><span class="ico"><i class="fa-solid fa-scissors"></i></span>Menu &amp; Pricing</button>`;
+  root.innerHTML=`<div class="app"><aside class="sidebar" id="mobileDrawer"><div class="brand"><div class="mark">47</div><div><strong>Studio 47</strong><small>${owner?'Owner':'Team member'}</small></div></div><div class="nav-label">Workspace</div><nav class="nav">${workspace}</nav><div class="nav-label">Website</div><nav class="nav"><button data-page="help"><span class="ico"><i class="fa-regular fa-circle-question"></i></span>Help &amp; Requests</button><a href="index.html" target="_blank"><span class="ico"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>View site</a><button id="out"><span class="ico"><i class="fa-solid fa-right-from-bracket"></i></span>Sign out</button></nav><div class="sidebar-card"><small>Signed in as</small><strong>${esc(staffProfile?.stylist_name||session.user.email)}</strong><p>${esc(session.user.email)}</p></div></aside><button class="mobile-nav-backdrop" id="mobileNavBackdrop" aria-label="Close menu"></button><main><header class="topbar"><button class="icon-btn mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-label="Open menu" aria-expanded="false"><i class="fa-solid fa-bars"></i><i class="fa-solid fa-xmark"></i></button><div class="crumb">Studio 47 / <strong id="crumb">Appointments</strong></div><div class="top-actions"><input class="search" id="search" placeholder="Search current page…">${languageControl()}<button class="icon-btn" id="refresh"><i class="fa-solid fa-rotate"></i></button><button class="avatar">${esc(currentEmail().slice(0,2).toUpperCase())}</button></div></header><div id="view"><div class="loading">Loading…</div></div></main></div>`;
+  const shell=document.querySelector('.app'),toggle=document.querySelector('#mobileMenuToggle'),backdrop=document.querySelector('#mobileNavBackdrop'),closeDrawer=()=>{shell.classList.remove('drawer-open');toggle.setAttribute('aria-expanded','false')};
+  toggle.onclick=()=>{const open=shell.classList.toggle('drawer-open');toggle.setAttribute('aria-expanded',String(open))};backdrop.onclick=closeDrawer;
+  document.querySelectorAll('[data-page]').forEach(button=>button.onclick=()=>{pageName=button.dataset.page;closeDrawer();render()});
+  document.querySelector('#out').onclick=async()=>{await db.auth.signOut();staffProfile=null;login()};document.querySelector('#refresh').onclick=()=>load(true);
+  const translateButton=document.querySelector('#translatorButton'),translatePanel=document.querySelector('#translatorPanel');translateButton.onclick=()=>{const opening=translatePanel.hidden;translatePanel.hidden=!opening;translateButton.setAttribute('aria-expanded',String(opening))};document.querySelector('#siteLanguage').onchange=event=>applyLanguage(event.target.value);ensureGoogleTranslate();load();
+};
+
+load=async function(note=false){
+  const profileResult=await db.from('staff_profiles').select('user_id,work_email,recovery_email,stylist_name,team_member_id,role,active').eq('user_id',session.user.id).maybeSingle();
+  if(profileResult.error||!profileResult.data?.active){document.querySelector('#view').innerHTML='<div class="page-head"><div><div class="eyebrow">Access</div><h1>Account not linked</h1><p>Ask Maria Elena to link this login to an active team member.</p></div></div>';return}
+  staffProfile=profileResult.data;
+  const queries=[db.from('site_content').select('*').order('sort_order'),db.from('services').select('*').order('sort_order'),db.from('reviews').select('*').order('created_at',{ascending:false}),db.from('appointments').select('*').order('appointment_date').order('appointment_time')];
+  if(isOwner())queries.push(db.from('staff_profiles').select('user_id,work_email,recovery_email,stylist_name,team_member_id,role,active').order('stylist_name'));
+  const results=await Promise.all(queries),error=results.find(result=>result.error)?.error;if(error){document.querySelector('#view').innerHTML=`<div class="page-head"><div><div class="eyebrow">Access</div><h1>Unable to load data</h1><p>${esc(error.message)}</p></div></div>`;return}
+  const team=results[0].data.filter(item=>item.section==='team').map(item=>{try{return {...JSON.parse(item.content_value||'{}'),id:item.id,content_key:item.content_key,sort_order:item.sort_order}}catch{return null}}).filter(Boolean);
+  data={content:results[0].data,services:results[1].data,reviews:results[2].data,appointments:results[3].data,team,staffProfiles:results[4]?.data||[staffProfile]};
+  const badge=document.querySelector('#badge');if(badge)badge.textContent=data.reviews.filter(item=>!item.is_live).length;render();if(note)toast('Dashboard refreshed');
+};
+
+function readOnlyReviews(){
+  const rows=data.reviews||[];document.querySelector('#view').innerHTML=`<section class="page-head"><div><div class="eyebrow">Reputation</div><h1>Reviews</h1><p>View customer reviews. Only Maria Elena can add, edit, publish, or delete them.</p></div></section><p class="readonly-note"><i class="fa-solid fa-eye"></i> Read-only access</p><article class="card"><div class="table-wrap"><table><thead><tr><th>Client</th><th>Rating</th><th>Review</th><th>Source</th><th>Visibility</th></tr></thead><tbody id="rows">${rows.map(item=>`<tr data-search="${esc(`${item.author} ${item.body} ${item.source}`.toLowerCase())}"><td><strong>${esc(item.author)}</strong></td><td><span class="admin-stars">${'★'.repeat(Number(item.rating)||0)}</span></td><td>${esc(item.body||'—')}</td><td>${sourceBadge(item.source)}</td><td><span class="status-pill ${item.is_live?'confirmed':'pending'}">${item.is_live?'Live':'Not live'}</span></td></tr>`).join('')}</tbody></table>${rows.length?'':'<div class="empty">No reviews yet.</div>'}</div></article>`;
+}
+function readOnlyServices(){
+  const rows=orderedServices();document.querySelector('#view').innerHTML=`<section class="services-v2-page"><div class="page-head"><div><div class="eyebrow">Services</div><h1>Menu &amp; Pricing</h1><p>View the current service menu and prices.</p></div></div><p class="readonly-note"><i class="fa-solid fa-eye"></i> Read-only access. Only Maria Elena can change pricing.</p><div class="services-v2-grid">${rows.map((item,index)=>`<article class="service-v2-card"><div class="service-v2-top"><span class="service-v2-order">${index+1}</span><div class="service-v2-name"><strong>${esc(item.name||'Untitled service')}</strong></div><span class="service-v2-price">${esc(displayPrice(item.price))}</span></div><p class="service-v2-description">${esc(item.description||'No description')}</p></article>`).join('')}</div></section>`;
+}
+
+render=function(){
+  const owner=isOwner(),ownerPages=new Set(['overview','reviews','content','services','appointments','team','help']),staffPages=new Set(['appointments','reviews','services','help']);if(!(owner?ownerPages:staffPages).has(pageName))pageName='appointments';
+  document.querySelectorAll('[data-page]').forEach(button=>button.classList.toggle('active',button.dataset.page===pageName));const crumb=document.querySelector('#crumb');if(crumb)crumb.textContent=pageName==='content'?'Gallery':pageName[0].toUpperCase()+pageName.slice(1);
+  if(!owner&&pageName==='reviews')return readOnlyReviews();if(!owner&&pageName==='services')return readOnlyServices();if(pageName==='overview')return overview();if(pageName==='appointments')return appointmentsManager();if(pageName==='team')return teamManager();if(pageName==='help')return helpManager();return manager();
+};
+
+const unrestrictedAppointmentEditor=appointmentEditor;
+appointmentEditor=function(appointment={}){
+  if(isOwner())return unrestrictedAppointmentEditor(appointment);
+  if(!staffProfile?.stylist_name)return alert('This account is not linked to a team member.');
+  if(appointment.id&&appointment.staff_user_id!==session.user.id)return alert('You can only edit your own appointments.');
+  overlay.innerHTML=`<div class="modal-bg"><div class="modal"><div class="modal-head"><h2>${appointment.id?'Edit':'Set'} my appointment</h2><button class="close">×</button></div><form id="appointmentEdit"><div class="form-grid"><div class="field"><label>Client name</label><input name="client_name" required maxlength="80" value="${esc(appointment.client_name||'')}"></div><div class="field"><label>Phone number</label><input name="phone" type="tel" required maxlength="30" value="${esc(appointment.phone||'')}"></div><div class="field"><label>Date</label><input name="appointment_date" type="date" required value="${esc(appointment.appointment_date||'')}"></div><div class="field"><label>Time</label><input name="appointment_time" type="time" step="900" required value="${esc(String(appointment.appointment_time||'').slice(0,5))}"></div><div class="field"><label>Service</label><select name="service_type" required>${serviceOptions(appointment.service_type)}</select></div><div class="field"><label>Stylist</label><input value="${esc(staffProfile.stylist_name)}" readonly><input name="stylist" type="hidden" value="${esc(staffProfile.stylist_name)}"></div><div class="field full"><label>Notes</label><textarea name="notes" maxlength="500">${esc(appointment.notes||'')}</textarea></div></div><div class="modal-actions"><button type="button" class="ghost cancel">Cancel</button><button class="primary">Save appointment</button></div></form></div></div>`;
+  overlay.querySelector('.close').onclick=overlay.querySelector('.cancel').onclick=()=>overlay.innerHTML='';overlay.querySelector('#appointmentEdit').onsubmit=async event=>{event.preventDefault();const record=Object.fromEntries(new FormData(event.currentTarget));record.stylist=staffProfile.stylist_name;record.staff_user_id=session.user.id;record.status=appointment.status||'confirmed';const query=appointment.id?db.from('appointments').update(record).eq('id',appointment.id).eq('staff_user_id',session.user.id):db.from('appointments').insert(record),{error}=await query;if(error)return alert(error.message);overlay.innerHTML='';toast('Appointment saved');load()};
+};
+
+const ownerTeamManager=teamManager;
+teamManager=function(){
+  if(!isOwner())return;ownerTeamManager();const table=document.querySelector('#view table');if(!table)return;const profiles=data.staffProfiles||[],head=table.querySelector('thead tr');head?.children[1]?.insertAdjacentHTML('afterend','<th>Linked login</th>');table.querySelectorAll('tbody tr').forEach((row,index)=>{const member=orderedTeam()[index],profile=profiles.find(item=>item.team_member_id===member?.id),nameCell=row.children[1];nameCell?.insertAdjacentHTML('afterend',`<td>${profile?`<strong>${esc(profile.work_email||profile.recovery_email||'Linked')}</strong><span class="linked-email">${esc(profile.recovery_email||'')}</span>`:'<span class="status-pill pending">Not linked</span>'}</td>`)});labelResponsiveTables(document.querySelector('#view'));
+};
+
+/* Re-run access initialization after the final overrides are installed. */
+(async()=>{session=(await db.auth.getSession()).data.session;if(!session)return;const {data:profile}=await db.from('staff_profiles').select('user_id,work_email,recovery_email,stylist_name,team_member_id,role,active').eq('user_id',session.user.id).maybeSingle();staffProfile=profile||null;if(session.user.user_metadata?.password_setup_complete)app()})();
+</script>
 </body></html>
