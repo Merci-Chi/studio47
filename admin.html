@@ -988,4 +988,23 @@ appointmentsManager=function(){
   const escape=event=>{if(event.key==='Escape'&&!panel.hidden)closeFilters()};document.addEventListener('keydown',escape,{once:false});
 };
 </script>
+<style>
+.service-order-number{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--blush);color:var(--pink);font-weight:950}.service-order-buttons{display:inline-flex;gap:5px}.service-order-buttons button{width:36px;height:36px;padding:0;display:grid;place-items:center}.service-order-buttons button:disabled{opacity:.3;cursor:not-allowed}@media(max-width:760px){body[data-page="services"] table{min-width:760px}.service-order-number{width:34px;height:34px}}
+</style>
+<script>
+const headsBeforeServiceOrder=heads,rowBeforeServiceOrder=row;
+const orderedServices=()=>[...(data.services||[])].sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.id).localeCompare(String(b.id)));
+heads=function(){return pageName==='services'?['Order','Service','Price','Description']:headsBeforeServiceOrder()};
+row=function(item){
+  if(pageName!=='services')return rowBeforeServiceOrder(item);
+  const ordered=orderedServices(),position=ordered.findIndex(service=>service.id===item.id)+1;
+  return `<tr data-search="${esc(`${position} ${item.name||''} ${item.price||''} ${item.description||''}`.toLowerCase())}"><td><span class="service-order-number">${position}</span></td><td class="cell"><strong>${esc(item.name||'')}</strong><small>${esc(String(item.id||'').slice(0,8))}</small></td><td>${esc(displayPrice(item.price))}</td><td>${esc(item.description||'')}</td><td><button class="toggle ${item.is_live?'live':'draft'}" data-toggle="${item.id}" data-live="${item.is_live}">${item.is_live?'Live':'Not live'}</button></td><td><div class="row-actions"><span class="service-order-buttons"><button class="ghost" type="button" onclick="moveService('${item.id}',-1)" aria-label="Move ${esc(item.name||'service')} up" ${position===1?'disabled':''}><i class="fa-solid fa-arrow-up"></i></button><button class="ghost" type="button" onclick="moveService('${item.id}',1)" aria-label="Move ${esc(item.name||'service')} down" ${position===ordered.length?'disabled':''}><i class="fa-solid fa-arrow-down"></i></button></span><button class="ghost" data-edit="${item.id}">Edit</button><button class="danger" data-delete="${item.id}">Delete</button></div></td></tr>`;
+};
+async function moveService(id,direction){
+  const ordered=orderedServices(),index=ordered.findIndex(item=>item.id===id),next=index+direction;if(index<0||next<0||next>=ordered.length)return;
+  [ordered[index],ordered[next]]=[ordered[next],ordered[index]];
+  const results=await Promise.all(ordered.map((item,position)=>db.from('services').update({sort_order:position+1}).eq('id',item.id))),error=results.find(result=>result.error)?.error;
+  if(error)return alert(error.message);toast('Service order updated');load();
+}
+</script>
 </body></html>
