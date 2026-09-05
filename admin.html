@@ -1165,11 +1165,10 @@ labelResponsiveTables();
 </style>
 <script>
 /* Role-aware access. Database RLS remains the security boundary. */
-const OWNER_EMAIL='marielenaespino78@gmail.com';
 let staffProfile=null;
 let accessLoadSequence=0;
 const currentEmail=()=>String(session?.user?.email||'').trim().toLowerCase();
-const isOwner=()=>currentEmail()===OWNER_EMAIL&&staffProfile?.role==='owner';
+const isOwner=()=>staffProfile?.active===true&&staffProfile?.role==='owner';
 
 window.openAppointmentActions=function(id,event){
   event?.stopPropagation();const appointment=data.appointments.find(item=>item.id===id);if(!appointment)return;
