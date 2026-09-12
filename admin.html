@@ -1371,6 +1371,82 @@ render=function(){
   return renderBeforeCompactV28();
 };
 
+/* Unread appointment and review notifications. */
+document.head.insertAdjacentHTML('beforeend',`<style>
+.nav .badge.notification-count{position:static;margin-left:auto;min-width:21px;height:21px;padding:0 6px;display:inline-grid;place-items:center;border-radius:999px;background:#ff2d8b;color:#fff;font-size:.65rem;font-weight:900;line-height:1;box-shadow:0 0 0 2px #580330}
+.nav .badge.notification-count[hidden],.notification-total[hidden]{display:none!important}
+.notification-wrap{position:relative}
+.notification-trigger{position:relative;border-radius:50%!important;font-size:1rem}
+.notification-total{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;padding:0 5px;display:grid;place-items:center;border:2px solid #f8f3f6;border-radius:999px;background:#e3146e;color:#fff;font-size:.58rem;font-weight:900;line-height:1}
+.notification-panel{position:absolute;z-index:70;top:48px;right:0;width:min(330px,calc(100vw - 30px));padding:10px;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 22px 55px #36041e2e}
+.notification-panel[hidden]{display:none}
+.notification-head{display:flex;align-items:center;justify-content:space-between;padding:8px 9px 12px}.notification-head strong{font:400 1.15rem Georgia,serif}.notification-head small{color:var(--muted)}
+.notification-item{width:100%;min-height:62px;padding:10px;border:0;border-radius:12px;display:grid;grid-template-columns:38px 1fr auto;align-items:center;gap:10px;background:transparent;color:var(--ink);text-align:left}
+.notification-item:hover{background:var(--blush)}.notification-item>i{width:38px;height:38px;display:grid;place-items:center;border-radius:11px;background:var(--blush);color:var(--pink)}
+.notification-item strong,.notification-item small{display:block}.notification-item small{margin-top:2px;color:var(--muted);font-size:.68rem}.notification-item .notification-count{min-width:24px;height:24px;padding:0 7px;display:grid;place-items:center;border-radius:999px;background:var(--pink);color:#fff;font-size:.68rem;font-weight:900}
+.notification-empty{padding:16px 10px;color:var(--muted);font-size:.75rem;text-align:center}
+html[data-theme="dark"] .notification-panel{border-color:#55313f;background:#191216}html[data-theme="dark"] .notification-item{color:#fff5fa}html[data-theme="dark"] .notification-item:hover,html[data-theme="dark"] .notification-item>i{background:#321723}html[data-theme="dark"] .notification-total{border-color:#151014}
+@media(max-width:760px){.notification-wrap{position:static}.notification-panel{position:fixed;top:88px;right:12px;left:12px;width:auto}.notification-trigger{display:grid!important;width:50px!important;height:50px!important;min-width:50px!important;min-height:50px!important}.notification-total{top:auto;right:7px;margin-top:-49px}.nav .badge.notification-count{box-shadow:0 0 0 2px #580330}}
+</style>`);
+
+let notificationChannel=null;
+const notificationRecordKey=(type,item)=>String(item?.id||item?.name||item?.review_uri||`${item?.author||''}|${item?.created_at||item?.relative_time||''}|${item?.body||''}`);
+const notificationStorageKey=()=>`studio47_seen_notifications_${session?.user?.id||'guest'}`;
+function readNotificationState(){try{return JSON.parse(localStorage.getItem(notificationStorageKey())||'{"appointments":[],"reviews":[]')}catch{return {appointments:[],reviews:[]}}}
+function writeNotificationState(state){localStorage.setItem(notificationStorageKey(),JSON.stringify({appointments:[...(state.appointments||[])].slice(-500),reviews:[...(state.reviews||[])].slice(-500)}))}
+function notificationItems(type){return type==='appointments'?(data.appointments||[]):(data.reviews||[])}
+function unreadNotificationCount(type){const seen=new Set(readNotificationState()[type]||[]);return notificationItems(type).filter(item=>!seen.has(notificationRecordKey(type,item))).length}
+function markNotificationsSeen(type){const state=readNotificationState();state[type]=[...new Set([...(state[type]||[]),...notificationItems(type).map(item=>notificationRecordKey(type,item))])];writeNotificationState(state);refreshNotificationCounts()}
+function notificationCountLabel(count){return count>99?'99+':String(count)}
+function refreshNotificationCounts(){
+  if(!document.querySelector('.app'))return;
+  const counts={appointments:unreadNotificationCount('appointments'),reviews:unreadNotificationCount('reviews')};
+  document.querySelectorAll('[data-notification-badge]').forEach(badge=>{const count=counts[badge.dataset.notificationBadge]||0;badge.textContent=notificationCountLabel(count);badge.hidden=!count});
+  const total=counts.appointments+counts.reviews,totalBadge=document.querySelector('.notification-total');if(totalBadge){totalBadge.textContent=notificationCountLabel(total);totalBadge.hidden=!total}
+  const appointmentCount=document.querySelector('[data-panel-count="appointments"]'),reviewCount=document.querySelector('[data-panel-count="reviews"]');
+  if(appointmentCount){appointmentCount.textContent=notificationCountLabel(counts.appointments);appointmentCount.hidden=!counts.appointments}
+  if(reviewCount){reviewCount.textContent=notificationCountLabel(counts.reviews);reviewCount.hidden=!counts.reviews}
+  const empty=document.querySelector('.notification-empty');if(empty)empty.hidden=!!total;
+}
+function openNotificationPage(type){
+  markNotificationsSeen(type);pageName=type;
+  document.querySelector('.notification-panel')?.setAttribute('hidden','');
+  document.querySelector('.notification-trigger')?.setAttribute('aria-expanded','false');
+  document.querySelector('.app')?.classList.remove('drawer-open');
+  render();
+}
+function installNotificationUI(){
+  document.querySelectorAll('[data-page="appointments"],[data-page="reviews"]').forEach(button=>{
+    const type=button.dataset.page;let badge=button.querySelector('[data-notification-badge]');
+    if(!badge){badge=document.createElement('span');button.appendChild(badge)}
+    badge.className='badge notification-count';badge.dataset.notificationBadge=type;badge.hidden=true;
+    button.addEventListener('click',()=>markNotificationsSeen(type),{capture:true});
+  });
+  const avatar=document.querySelector('.top-actions .avatar');
+  if(avatar){
+    const wrap=document.createElement('div');wrap.className='notification-wrap';avatar.before(wrap);wrap.appendChild(avatar);
+    avatar.className='icon-btn notification-trigger';avatar.type='button';avatar.setAttribute('aria-label','Open notifications');avatar.setAttribute('aria-expanded','false');
+    avatar.innerHTML='<i class="fa-regular fa-bell"></i><span class="notification-total" hidden>0</span>';
+    wrap.insertAdjacentHTML('beforeend',`<div class="notification-panel" hidden><div class="notification-head"><strong>Notifications</strong><small>New activity</small></div><button class="notification-item" type="button" data-notification-open="appointments"><i class="fa-regular fa-calendar-check"></i><span><strong>Appointments</strong><small>New booking activity</small></span><b class="notification-count" data-panel-count="appointments" hidden>0</b></button><button class="notification-item" type="button" data-notification-open="reviews"><i class="fa-regular fa-star"></i><span><strong>Reviews</strong><small>New customer feedback</small></span><b class="notification-count" data-panel-count="reviews" hidden>0</b></button><div class="notification-empty">You're all caught up.</div></div>`);
+    const panel=wrap.querySelector('.notification-panel');
+    avatar.onclick=event=>{event.stopPropagation();const opening=panel.hidden;panel.hidden=!opening;avatar.setAttribute('aria-expanded',String(opening))};
+    panel.onclick=event=>event.stopPropagation();
+    panel.querySelectorAll('[data-notification-open]').forEach(button=>button.onclick=()=>openNotificationPage(button.dataset.notificationOpen));
+    document.addEventListener('click',()=>{panel.hidden=true;avatar.setAttribute('aria-expanded','false')});
+  }
+  if(!notificationChannel){
+    let refreshTimer;
+    notificationChannel=db.channel(`studio47-admin-notifications-${session?.user?.id||'guest'}`)
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'appointments'},()=>{clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>load(),250)})
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'reviews'},()=>{clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>load(),250)})
+      .subscribe();
+  }
+  refreshNotificationCounts();
+}
+const loadBeforeNotifications=load;
+load=async function(note=false){await loadBeforeNotifications(note);refreshNotificationCounts()};
+const appBeforeNotifications=app;
+
 /* Re-run access initialization after the final overrides are installed. */
 (async()=>{session=(await db.auth.getSession()).data.session;if(!session)return;const {data:profile}=await db.from('staff_profiles').select('user_id,work_email,recovery_email,stylist_name,team_member_id,role,active').eq('user_id',session.user.id).maybeSingle();staffProfile=profile||null;if(session.user.user_metadata?.password_setup_complete)app()})();
 </script>
