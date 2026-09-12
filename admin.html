@@ -1275,7 +1275,15 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 html[data-theme="dark"] .topbar{background:#151014}
 .translator-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}.translator-panel-head label{margin:0}.translator-close{width:34px;height:34px;flex:0 0 34px;border:0;border-radius:50%;display:grid;place-items:center;background:var(--blush);color:var(--wine)}
 html[data-theme="dark"] .translator-close{background:#321723;color:#ff6bac}
+/* Popups may scroll vertically, but never horizontally. */
+.modal-bg,.appointment-filter-backdrop{overflow:hidden!important;overscroll-behavior:none}
+.modal,.translator-panel,.appointment-filter-panel,.appointment-action-menu,.appointment-actions-modal,.time-picker-sheet,.calendar-picker-sheet{box-sizing:border-box;max-width:calc(100vw - 20px);overflow-x:hidden!important;overscroll-behavior-x:none}
+.modal *,.translator-panel *,.appointment-filter-panel *,.appointment-action-menu *,.appointment-actions-modal *,.time-picker-sheet *,.calendar-picker-sheet *{box-sizing:border-box;min-width:0;max-width:100%}
+.modal input,.modal select,.modal textarea,.translator-panel select,.appointment-filter-panel input,.appointment-filter-panel select{width:100%;max-width:100%}
+.modal table,.appointment-filter-panel table,.appointment-action-menu table{width:100%;min-width:0;table-layout:fixed}
+.modal td,.modal th,.translator-panel,.appointment-filter-panel,.appointment-action-menu,.appointment-actions-modal{overflow-wrap:anywhere;word-break:break-word}
 @media(max-width:760px){
+  .modal,.translator-panel,.appointment-filter-panel,.appointment-action-menu,.appointment-actions-modal,.time-picker-sheet,.calendar-picker-sheet{overflow-x:hidden!important;touch-action:pan-y}
   body:has(.app.drawer-open){overflow:hidden}
   .sidebar{position:fixed!important;top:0!important;right:auto!important;bottom:0!important;left:0!important;inset-block:0!important;inset-inline:0 auto!important;width:clamp(300px,78vw,460px)!important;height:auto!important;min-height:100vh!important;min-height:100dvh!important;max-height:none!important;padding:max(28px,calc(env(safe-area-inset-top) + 18px)) 22px max(24px,calc(env(safe-area-inset-bottom) + 18px))!important;border-radius:0;overflow-x:hidden!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;box-shadow:18px 0 50px #28051952}
   .mobile-nav-backdrop{touch-action:none}
