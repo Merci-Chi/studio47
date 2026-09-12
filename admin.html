@@ -1210,7 +1210,15 @@ load=async function(note=false){
   if(requestId!==accessLoadSequence)return;
   if(profileResult.error||!profileResult.data?.active){document.querySelector('#view').innerHTML='<div class="page-head"><div><div class="eyebrow">Access</div><h1>Account not linked</h1><p>Ask Maria Elena to link this login to an active team member.</p></div></div>';return}
   staffProfile=profileResult.data;
-  const queries=[db.from('site_content').select('*').order('sort_order'),db.from('services').select('*').order('sort_order'),db.functions.invoke('google-reviews-deploy',{body:{}}),db.from('appointments').select('*').order('appointment_date').order('appointment_time')];
+  const reviewRequest=(async()=>{
+    const liveGoogleReviews=await db.functions.invoke('google-reviews',{body:{}});
+    if(!liveGoogleReviews.error)return liveGoogleReviews;
+    console.warn('Live Google reviews are unavailable; loading saved reviews instead.',liveGoogleReviews.error);
+    const savedReviews=await db.from('reviews').select('*').order('created_at',{ascending:false});
+    if(savedReviews.error)return savedReviews;
+    return {data:{reviews:savedReviews.data||[],place:null,fetched_at:null},error:null};
+  })();
+  const queries=[db.from('site_content').select('*').order('sort_order'),db.from('services').select('*').order('sort_order'),reviewRequest,db.from('appointments').select('*').order('appointment_date').order('appointment_time')];
   if(isOwner())queries.push(db.from('staff_profiles').select('user_id,work_email,recovery_email,stylist_name,team_member_id,role,active').order('stylist_name'));
   const results=await Promise.all(queries),error=results.find(result=>result.error)?.error;if(error){document.querySelector('#view').innerHTML=`<div class="page-head"><div><div class="eyebrow">Access</div><h1>Unable to load data</h1><p>${esc(error.message)}</p></div></div>`;return}
   if(requestId!==accessLoadSequence)return;
