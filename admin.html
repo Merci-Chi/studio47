@@ -1210,13 +1210,13 @@ load=async function(note=false){
   if(requestId!==accessLoadSequence)return;
   if(profileResult.error||!profileResult.data?.active){document.querySelector('#view').innerHTML='<div class="page-head"><div><div class="eyebrow">Access</div><h1>Account not linked</h1><p>Ask Maria Elena to link this login to an active team member.</p></div></div>';return}
   staffProfile=profileResult.data;
-  const queries=[db.from('site_content').select('*').order('sort_order'),db.from('services').select('*').order('sort_order'),db.from('reviews').select('*').order('created_at',{ascending:false}),db.from('appointments').select('*').order('appointment_date').order('appointment_time')];
+  const queries=[db.from('site_content').select('*').order('sort_order'),db.from('services').select('*').order('sort_order'),db.functions.invoke('google-reviews',{body:{}}),db.from('appointments').select('*').order('appointment_date').order('appointment_time')];
   if(isOwner())queries.push(db.from('staff_profiles').select('user_id,work_email,recovery_email,stylist_name,team_member_id,role,active').order('stylist_name'));
   const results=await Promise.all(queries),error=results.find(result=>result.error)?.error;if(error){document.querySelector('#view').innerHTML=`<div class="page-head"><div><div class="eyebrow">Access</div><h1>Unable to load data</h1><p>${esc(error.message)}</p></div></div>`;return}
   if(requestId!==accessLoadSequence)return;
   const team=results[0].data.filter(item=>item.section==='team').map(item=>{try{return {...JSON.parse(item.content_value||'{}'),id:item.id,content_key:item.content_key,sort_order:item.sort_order}}catch{return null}}).filter(Boolean);
-  data={content:results[0].data,services:results[1].data,reviews:results[2].data,appointments:results[3].data,team,staffProfiles:results[4]?.data||[staffProfile]};
-  const badge=document.querySelector('#badge');if(badge)badge.textContent=data.reviews.filter(item=>!item.is_live).length;render();if(note)toast('Dashboard refreshed');
+  data={content:results[0].data,services:results[1].data,reviews:results[2].data?.reviews||[],googlePlace:results[2].data?.place||null,reviewsFetchedAt:results[2].data?.fetched_at||null,appointments:results[3].data,team,staffProfiles:results[4]?.data||[staffProfile]};
+  const badge=document.querySelector('#badge');if(badge)badge.hidden=true;render();if(note)toast('Dashboard refreshed');
 };
 
 function readOnlyReviews(){
@@ -1271,7 +1271,7 @@ teamEditor=function(member={}){
 /* Compact mobile drawer with iOS safe-area spacing. */
 document.head.insertAdjacentHTML('beforeend',`<style>
 .drawer-close{display:none;margin-left:auto;flex:0 0 38px;width:38px;height:38px;border:1px solid #ffffff38;border-radius:50%;background:#ffffff16;color:#fff;font-size:1rem}
-.topbar{position:sticky!important;top:0;z-index:35;background:#f8f3f6}
+.topbar{position:sticky!important;top:12px;z-index:35;margin-top:12px;padding-inline:14px;border:1px solid var(--line);border-radius:14px;background:#f8f3f6;box-shadow:0 10px 28px #46082b12}
 html[data-theme="dark"] .topbar{background:#151014}
 .translator-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}.translator-panel-head label{margin:0}.translator-close{width:34px;height:34px;flex:0 0 34px;border:0;border-radius:50%;display:grid;place-items:center;background:var(--blush);color:var(--wine)}
 html[data-theme="dark"] .translator-close{background:#321723;color:#ff6bac}
@@ -1305,7 +1305,7 @@ html[data-theme="dark"] .compact-icon-btn,html[data-theme="dark"] .staff-service
   .mobile-nav-backdrop{touch-action:none}
   .sidebar .brand{padding:0 10px 26px 8px;gap:14px}.sidebar .mark{width:54px;height:54px;font-size:1.35rem}.sidebar .brand strong{font-size:1.45rem}.sidebar .brand small{font-size:.68rem}.drawer-close{display:grid;place-items:center;width:42px;height:42px;flex-basis:42px;border:0;background:transparent;color:#fff;font-size:1.25rem}
   .sidebar .nav-label{margin:27px 12px 10px;font-size:.68rem;letter-spacing:.18em}.sidebar .nav{gap:7px}.sidebar .nav button,.sidebar .nav a{min-height:54px;padding:11px 13px;border-radius:14px;font-size:.95rem}.sidebar .nav .ico{width:34px;height:34px;border-radius:9px;font-size:.9rem}.sidebar-card{margin-top:auto!important;padding:17px 18px;border-radius:16px}.sidebar-card strong{font-size:1.25rem}.sidebar-card p{font-size:.78rem}
-  .topbar{height:70px!important;padding:0 14px!important}.mobile-menu-toggle,#translatorButton,#themeToggle{display:grid!important;width:50px!important;height:50px!important;min-width:50px!important;min-height:50px!important;border-radius:13px!important;font-size:1.25rem!important;place-items:center!important}.top-actions{gap:10px!important}.translator-panel{top:74px!important}.appointment-filter-btn{justify-content:center!important}.appointment-filter-btn i{width:20px!important;height:20px!important;display:grid!important;place-items:center!important;line-height:1!important;margin:0!important}
+  .topbar{top:max(10px,env(safe-area-inset-top))!important;height:70px!important;margin-top:max(10px,env(safe-area-inset-top))!important;padding:0 14px!important}.mobile-menu-toggle,#translatorButton,#themeToggle{display:grid!important;width:50px!important;height:50px!important;min-width:50px!important;min-height:50px!important;border-radius:13px!important;font-size:1.25rem!important;place-items:center!important}.top-actions{gap:10px!important}.translator-panel{top:74px!important}.appointment-filter-btn{justify-content:center!important}.appointment-filter-btn i{width:20px!important;height:20px!important;display:grid!important;place-items:center!important;line-height:1!important;margin:0!important}
 }
 </style>`);
 
@@ -1333,8 +1333,8 @@ function staffServicesCompact(){
 }
 function staffReviewsCompact(){
   compactPageHeading('Reviews');
-  const rows=data.reviews||[];
-  document.querySelector('#view').innerHTML=`<section class="compact-page"><div class="compact-page-head"><div><div class="eyebrow">Reputation</div><h1>Reviews</h1><p>Customer feedback.</p></div></div><div class="staff-compact-list">${rows.map(item=>`<article class="staff-review-card" data-search="${esc(`${item.author||''} ${item.body||''} ${item.source||''}`.toLowerCase())}"><span class="stars admin-stars">${'★'.repeat(Number(item.rating)||0)}</span><strong>${esc(item.author||'Customer')}</strong>${item.body?`<p>${esc(item.body)}</p>`:''}<small>${sourceBadge(item.source)}</small></article>`).join('')||'<div class="empty">No reviews yet.</div>'}</div></section>`;
+  const rows=data.reviews||[],place=data.googlePlace||{},reviewLink=place.reviews_uri||place.maps_uri||'#';
+  document.querySelector('#view').innerHTML=`<section class="compact-page"><div class="compact-page-head"><div><div class="eyebrow"><i class="fa-brands fa-google"></i> Live Google reviews</div><h1>Reviews</h1><p>Read-only reviews linked directly to ${esc(place.name||'Studio 47 Las Vegas')}.</p></div>${reviewLink!=='#'?`<a class="compact-icon-btn" href="${esc(reviewLink)}" target="_blank" rel="noopener" aria-label="Open all reviews on Google"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>`:''}</div><article class="review-summary"><div><i class="fa-brands fa-google"></i><div><strong style="margin:0">${place.rating?esc(Number(place.rating).toFixed(1)):'—'} <span class="admin-stars">★</span></strong><small>${esc(place.review_count||0)} Google reviews · updated automatically</small></div></div></article><div class="staff-compact-list">${rows.map(item=>`<article class="staff-review-card" data-search="${esc(`${item.author||''} ${item.body||''}`.toLowerCase())}"><span class="stars admin-stars">${'★'.repeat(Number(item.rating)||0)}</span><strong>${esc(item.author||'Google user')}</strong>${item.body?`<p>${esc(item.body)}</p>`:''}<small>${esc(item.relative_time||'Google review')}${item.review_uri?` · <a href="${esc(item.review_uri)}" target="_blank" rel="noopener">View on Google</a>`:''}</small></article>`).join('')||'<div class="empty">Google did not return any review excerpts.</div>'}</div></section>`;
 }
 function showTeamSchedule(member){
   const profile=(data.staffProfiles||[]).find(item=>item.team_member_id===member.id),days=(member.working_days||[]).map(day=>weekDays[Number(day)]).filter(Boolean).join(', ')||'No working days',email=profile?.work_email||profile?.recovery_email||member.email||'No linked email';
@@ -1357,7 +1357,7 @@ function ownerGalleryCompact(){
 const renderBeforeCompactV28=render;
 render=function(){
   if(!isOwner()&&pageName==='services')return staffServicesCompact();
-  if(!isOwner()&&pageName==='reviews')return staffReviewsCompact();
+  if(pageName==='reviews')return staffReviewsCompact();
   if(isOwner()&&pageName==='team')return ownerTeamCompact();
   if(isOwner()&&pageName==='content')return ownerGalleryCompact();
   return renderBeforeCompactV28();
