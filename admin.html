@@ -1181,14 +1181,13 @@ window.openAppointmentActions=function(id,event){
 };
 
 forgotPassword=function(){
-  root.innerHTML=`<div class="login-wrap"><form class="login-card" id="forgot"><div class="login-brand"><div class="mark">47</div><div><h1>Recover access</h1><span class="eyebrow">Reset password</span></div></div><p>Enter the real personal email connected to your account. Studio 47 work addresses cannot receive reset links.</p><div id="err"></div><div class="stack"><input name="email" type="email" required autocomplete="email" inputmode="email" placeholder="Personal email (example@gmail.com)"><button class="primary">Send reset link</button><button type="button" class="auth-link" id="backLogin">Back to sign in</button></div></form></div>`;
+  root.innerHTML=`<div class="login-wrap"><form class="login-card" id="forgot"><div class="login-brand"><div class="mark">47</div><div><h1>Recover access</h1><span class="eyebrow">Reset password</span></div></div><p>Enter your email and we will send you a link to create a new password.</p><div id="err"></div><div class="stack"><input name="email" type="email" required autocomplete="email" inputmode="email" placeholder="Email"><button class="primary">Send reset link</button><button type="button" class="auth-link" id="backLogin">Back to sign in</button></div></form></div>`;
   document.querySelector('#backLogin').onclick=login;
   document.querySelector('#forgot').onsubmit=async event=>{
     event.preventDefault();const form=event.currentTarget,email=String(new FormData(form).get('email')||'').trim().toLowerCase(),err=document.querySelector('#err'),button=form.querySelector('.primary');err.innerHTML='';
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return err.innerHTML='<div class="error">Enter a valid personal email address.</div>';
-    if(email.endsWith('@studio47.com'))return err.innerHTML='<div class="error">Use your real personal email, not your @studio47.com work address.</div>';
+    if(!allowedAdminEmail(email))return err.innerHTML='<div class="error">Unable to send reset link.</div>';
     button.disabled=true;button.textContent='Sending…';const redirectTo=location.origin+location.pathname,{error}=await db.auth.resetPasswordForEmail(email,{redirectTo});button.disabled=false;button.textContent='Send reset link';
-    err.innerHTML=error?`<div class="error">${esc(error.message)}</div>`:'<div class="auth-success">If this personal email is connected to an account, a reset link will arrive shortly.</div>';
+    err.innerHTML=error?'<div class="error">Unable to send reset link.</div>':'<div class="auth-success">If an account exists for that email, you will receive a link in a few minutes.</div>';
   };
 };
 
