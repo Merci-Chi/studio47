@@ -1,3 +1,17 @@
+/* Route every legacy Studio 47 admin table reference to the real prefixed tables. */
+const studio47TableMap={
+  staff_profiles:'studio47-staff_profiles',
+  site_content:'studio47-site_content',
+  services:'studio47-services',
+  reviews:'studio47-reviews',
+  appointments:'studio47-appointments'
+};
+if(typeof db!=='undefined'&&db&&typeof db.from==='function'&&!db.__studio47PrefixedTables){
+  const originalStudio47From=db.from.bind(db);
+  db.from=function(table){return originalStudio47From(studio47TableMap[table]||table)};
+  Object.defineProperty(db,'__studio47PrefixedTables',{value:true,configurable:false,enumerable:false,writable:false});
+}
+
 let servicesCompactEditMode=false;
 function ownerServicesCompactFinal(){
   compactPageHeading('Menu & Pricing');
@@ -192,3 +206,13 @@ deleteHelpRequest=async function(localId,remoteId){
   if(remoteId){const {error}=await db.rpc('delete_website_request',{p_request_id:remoteId});if(error)return alert(error.message)}
   const {error}=await db.from('studio47-site_content').delete().eq('id',localId);if(error)return alert(error.message);toast('Request deleted');await load();
 };
+
+/* Rebuild the signed-in shell after the table routing is installed so access checks use only studio47-* tables. */
+queueMicrotask(async()=>{
+  if(typeof session==='undefined'||!session?.user?.id||typeof app!=='function')return;
+  try{
+    const {data:profile,error}=await db.from('studio47-staff_profiles').select('user_id,work_email,recovery_email,stylist_name,team_member_id,role,active').eq('user_id',session.user.id).maybeSingle();
+    if(error)throw error;
+    if(profile?.active){staffProfile=profile;await app();}
+  }catch(error){console.error('Studio 47 access refresh failed',error)}
+});
