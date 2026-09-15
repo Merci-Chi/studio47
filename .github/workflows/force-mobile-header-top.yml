@@ -1,0 +1,36 @@
+name: Force Studio 47 mobile header to top
+on:
+  push:
+    paths:
+      - '.github/workflows/force-mobile-header-top.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Force final mobile header position
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('admin.html')
+          s=p.read_text()
+          marker='/* FORCE_MOBILE_HEADER_TOP */'
+          style='''\n<style>\n/* FORCE_MOBILE_HEADER_TOP */\n@media(max-width:760px){\n  .topbar{top:0!important;margin-top:0!important;}\n}\n</style>\n'''
+          if marker in s:
+              start=s.rfind('<style>',0,s.find(marker))
+              end=s.find('</style>',s.find(marker))
+              if start!=-1 and end!=-1:
+                  s=s[:start]+s[end+8:]
+          if '</body>' not in s:
+              raise SystemExit('Closing body tag not found')
+          s=s.replace('</body>',style+'</body>',1)
+          p.write_text(s)
+          PY
+          rm .github/workflows/force-mobile-header-top.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin.html .github/workflows/force-mobile-header-top.yml
+          git commit -m "Force Studio 47 mobile header to top"
+          git push
