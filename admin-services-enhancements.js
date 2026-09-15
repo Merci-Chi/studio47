@@ -53,7 +53,14 @@ document.addEventListener('touchend',async()=>{
   try{await load(true)}finally{setTimeout(()=>{pullRefreshing=false;pullDistance=0;pullRefreshIndicator.classList.remove('visible','refreshing');pullRefreshIndicator.style.transform='translate(-50%,-140%)';pullRefreshIndicator.querySelector('span').textContent='Pull to refresh'},350)}
 },{passive:true});
 
-/* Improve saved-password / AutoFill support in installed web apps and browsers. */
+/* Improve saved-password / AutoFill support and optionally remember only the username on this device. */
+const STUDIO47_SAVED_USERNAME_KEY='studio47_saved_username';
+if(!document.querySelector('#studio47-device-save-style')){
+  const rememberStyle=document.createElement('style');
+  rememberStyle.id='studio47-device-save-style';
+  rememberStyle.textContent=`.save-device-row{display:flex;align-items:center;gap:9px;margin:-2px 0 2px;color:var(--muted);font-size:.78rem;font-weight:700;cursor:pointer;user-select:none}.save-device-row input{width:18px;height:18px;margin:0;accent-color:var(--pink);flex:0 0 auto}.save-device-row span{line-height:1.2}`;
+  document.head.appendChild(rememberStyle);
+}
 function enhanceStudio47CredentialAutofill(){
   const form=document.querySelector('#login');
   if(!form)return;
@@ -72,6 +79,33 @@ function enhanceStudio47CredentialAutofill(){
   if(password){
     password.id='studio47-current-password';
     password.setAttribute('autocomplete','current-password');
+  }
+
+  let remember=form.querySelector('#studio47SaveToDevice');
+  if(!remember&&password){
+    const label=document.createElement('label');
+    label.className='save-device-row';
+    label.innerHTML='<input id="studio47SaveToDevice" type="checkbox"><span>Save to device</span>';
+    password.insertAdjacentElement('afterend',label);
+    remember=label.querySelector('input');
+  }
+
+  let saved='';
+  try{saved=localStorage.getItem(STUDIO47_SAVED_USERNAME_KEY)||''}catch{}
+  if(email&&saved&&!email.value)email.value=saved;
+  if(remember)remember.checked=!!saved;
+
+  if(!form.dataset.localUsernameBound){
+    form.dataset.localUsernameBound='true';
+    form.addEventListener('submit',()=>{
+      const emailField=form.querySelector('input[name="email"]');
+      const saveBox=form.querySelector('#studio47SaveToDevice');
+      const value=String(emailField?.value||'').trim().toLowerCase();
+      try{
+        if(saveBox?.checked&&value)localStorage.setItem(STUDIO47_SAVED_USERNAME_KEY,value);
+        else localStorage.removeItem(STUDIO47_SAVED_USERNAME_KEY);
+      }catch{}
+    },true);
   }
 }
 const originalStudio47Login=window.login;
