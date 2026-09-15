@@ -64,7 +64,6 @@ function enhanceStudio47CredentialAutofill(){
   const password=form.querySelector('input[name="password"]');
   if(email){
     email.id='studio47-username';
-    email.name='username';
     email.setAttribute('autocomplete','username');
     email.setAttribute('autocapitalize','none');
     email.setAttribute('spellcheck','false');
@@ -72,7 +71,6 @@ function enhanceStudio47CredentialAutofill(){
   }
   if(password){
     password.id='studio47-current-password';
-    password.name='password';
     password.setAttribute('autocomplete','current-password');
   }
 }
