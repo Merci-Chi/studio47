@@ -52,3 +52,37 @@ document.addEventListener('touchend',async()=>{
   pullRefreshing=true;servicesCompactEditMode=false;pullRefreshIndicator.classList.remove('ready');pullRefreshIndicator.classList.add('visible','refreshing');pullRefreshIndicator.style.transform='translate(-50%,12%)';pullRefreshIndicator.querySelector('span').textContent='Refreshing…';
   try{await load(true)}finally{setTimeout(()=>{pullRefreshing=false;pullDistance=0;pullRefreshIndicator.classList.remove('visible','refreshing');pullRefreshIndicator.style.transform='translate(-50%,-140%)';pullRefreshIndicator.querySelector('span').textContent='Pull to refresh'},350)}
 },{passive:true});
+
+/* Improve saved-password / AutoFill support in installed web apps and browsers. */
+function enhanceStudio47CredentialAutofill(){
+  const form=document.querySelector('#login');
+  if(!form)return;
+  form.setAttribute('autocomplete','on');
+  form.setAttribute('method','post');
+  form.setAttribute('action',location.href);
+  const email=form.querySelector('input[name="email"]');
+  const password=form.querySelector('input[name="password"]');
+  if(email){
+    email.id='studio47-username';
+    email.name='username';
+    email.setAttribute('autocomplete','username');
+    email.setAttribute('autocapitalize','none');
+    email.setAttribute('spellcheck','false');
+    email.setAttribute('inputmode','email');
+  }
+  if(password){
+    password.id='studio47-current-password';
+    password.name='password';
+    password.setAttribute('autocomplete','current-password');
+  }
+}
+const originalStudio47Login=window.login;
+if(typeof originalStudio47Login==='function'){
+  window.login=function(){
+    const result=originalStudio47Login.apply(this,arguments);
+    queueMicrotask(enhanceStudio47CredentialAutofill);
+    return result;
+  };
+}
+new MutationObserver(enhanceStudio47CredentialAutofill).observe(document.querySelector('#root')||document.body,{childList:true,subtree:true});
+enhanceStudio47CredentialAutofill();
