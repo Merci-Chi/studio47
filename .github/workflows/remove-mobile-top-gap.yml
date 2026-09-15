@@ -1,0 +1,36 @@
+name: Remove Studio 47 mobile top gap
+on:
+  push:
+    paths:
+      - '.github/workflows/remove-mobile-top-gap.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove mobile app top spacer
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('admin.html')
+          s=p.read_text()
+          marker='/* REMOVE_MOBILE_TOP_GAP */'
+          style='''\n<style>\n/* REMOVE_MOBILE_TOP_GAP */\n@media(max-width:760px){\n  .app{padding-top:0!important;}\n  main{padding-top:0!important;margin-top:0!important;}\n  .topbar{position:sticky!important;top:0!important;margin-top:0!important;}\n}\n</style>\n'''
+          if marker in s:
+              start=s.rfind('<style>',0,s.find(marker))
+              end=s.find('</style>',s.find(marker))
+              if start!=-1 and end!=-1:
+                  s=s[:start]+s[end+8:]
+          if '</body>' not in s:
+              raise SystemExit('Closing body tag not found')
+          s=s.replace('</body>',style+'</body>',1)
+          p.write_text(s)
+          PY
+          rm .github/workflows/remove-mobile-top-gap.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin.html .github/workflows/remove-mobile-top-gap.yml
+          git commit -m "Remove Studio 47 mobile top gap"
+          git push
