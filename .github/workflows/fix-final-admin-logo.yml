@@ -1,0 +1,36 @@
+name: Fix final Studio 47 admin sidebar logo
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-final-admin-logo.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Patch final sidebar logo
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('admin.html')
+          s=p.read_text()
+          old='<aside class="sidebar" id="mobileDrawer"><div class="brand"><div class="mark">47</div>'
+          new='<aside class="sidebar" id="mobileDrawer"><div class="brand"><img class="sidebar-logo" src="images/logo.png" alt="Studio 47 logo">'
+          count=s.count(old)
+          if count < 1:
+              raise SystemExit('No remaining sidebar 47 marks found')
+          s=s.replace(old,new)
+          p.write_text(s)
+          print(f'Replaced {count} sidebar mark(s)')
+          PY
+          rm .github/workflows/fix-final-admin-logo.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin.html .github/workflows/fix-final-admin-logo.yml
+          git commit -m "Use logo in final Studio 47 admin sidebar"
+          git push origin main
