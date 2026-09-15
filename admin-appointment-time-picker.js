@@ -99,14 +99,14 @@
       const record=Object.fromEntries(new FormData(form));
       if(owner){
         record.status=record.status||'confirmed';
-        const query=appointment.id?db.from('appointments').update(record).eq('id',appointment.id):db.from('appointments').insert(record);
+        const query=appointment.id?db.from('studio47-appointments').update(record).eq('id',appointment.id):db.from('studio47-appointments').insert(record);
         const {error}=await query;
         if(error)return alert(error.code==='23505'?'That stylist is already booked at that time.':error.message);
       }else{
         record.stylist=staffProfile.stylist_name;
         record.staff_user_id=session.user.id;
         record.status=appointment.status||'confirmed';
-        const query=appointment.id?db.from('appointments').update(record).eq('id',appointment.id).eq('staff_user_id',session.user.id):db.from('appointments').insert(record);
+        const query=appointment.id?db.from('studio47-appointments').update(record).eq('id',appointment.id).eq('staff_user_id',session.user.id):db.from('studio47-appointments').insert(record);
         const {error}=await query;
         if(error)return alert(error.message);
       }
