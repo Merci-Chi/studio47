@@ -17,3 +17,12 @@ html[data-theme="dark"] .modal .star-picker label:hover,html[data-theme="dark"] 
 .review-current-rating{display:flex;align-items:center;gap:7px;margin-top:8px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--blush);color:var(--wine);font-size:.72rem;font-weight:900}
 .review-current-rating .admin-stars{font-size:.9rem}
 html[data-theme="dark"] .review-current-rating{background:#402936;color:#fff5fa;border-color:#85526a}
+
+/* FIX_APPOINTMENT_FILTER_DESKTOP_WIDTH */
+@media(min-width:761px){
+  .appointment-filter-panel{
+    width:min(330px,calc(100vw - 32px))!important;
+    max-width:min(330px,calc(100vw - 32px))!important;
+    min-width:280px!important;
+  }
+}
