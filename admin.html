@@ -1453,4 +1453,11 @@ const appBeforeNotifications=app;
 /* Re-run access initialization after the final overrides are installed. */
 (async()=>{session=(await db.auth.getSession()).data.session;if(!session)return;if(!allowedAdminEmail(session.user?.email))return rejectAdminAccess();const {data:profile}=await db.from('staff_profiles').select('user_id,work_email,recovery_email,stylist_name,team_member_id,role,active').eq('user_id',session.user.id).maybeSingle();staffProfile=profile||null;if(session.user.user_metadata?.password_setup_complete)app()})();
 </script>
+
+<style>
+/* FORCE_MOBILE_HEADER_TOP */
+@media(max-width:760px){
+  .topbar{top:0!important;margin-top:0!important;}
+}
+</style>
 </body></html>
