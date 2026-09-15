@@ -16,11 +16,15 @@ jobs:
           from pathlib import Path
           p=Path('admin.html')
           s=p.read_text()
-          old=".topbar{top:max(10px,env(safe-area-inset-top))!important;height:70px!important;margin-top:max(10px,env(safe-area-inset-top))!important;padding:0 14px!important}"
-          new=".topbar{top:env(safe-area-inset-top)!important;height:64px!important;margin-top:env(safe-area-inset-top)!important;padding:0 14px!important}"
+          old=".topbar{top:max(8px,env(safe-area-inset-top))!important;height:60px!important;margin-top:8px!important;padding:0 12px!important}"
+          new=".topbar{top:4px!important;height:60px!important;margin-top:0!important;padding:0 12px!important}"
           if old not in s:
-              raise SystemExit('Target mobile topbar rule not found')
+              raise SystemExit('Current mobile topbar rule not found')
           s=s.replace(old,new,1)
+          marker='@media(max-width:760px){\n'
+          standalone='@media(max-width:760px) and (display-mode:standalone){main{padding-top:calc(env(safe-area-inset-top) + 2px)!important}.topbar{top:calc(env(safe-area-inset-top) + 2px)!important;margin-top:0!important}}\n'
+          if standalone not in s:
+              s=s.replace(marker,standalone+marker,1)
           p.write_text(s)
           PY
           rm .github/workflows/raise-mobile-header.yml
