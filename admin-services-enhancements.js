@@ -85,7 +85,7 @@ function enhanceStudio47CredentialAutofill(){
   if(!remember&&password){
     const label=document.createElement('label');
     label.className='save-device-row';
-    label.innerHTML='<input id="studio47SaveToDevice" type="checkbox"><span>Save to device</span>';
+    label.innerHTML='<input id="studio47SaveToDevice" type="checkbox"><span>Save email to device</span>';
     password.insertAdjacentElement('afterend',label);
     remember=label.querySelector('input');
   }
