@@ -1172,7 +1172,7 @@ labelResponsiveTables();
 let staffProfile=null;
 let accessLoadSequence=0;
 const currentEmail=()=>String(session?.user?.email||'').trim().toLowerCase();
-const isOwner=()=>staffProfile?.active===true&&staffProfile?.role==='owner';
+const isOwner=()=>currentEmail()==='kiara@steadyhandsop.com'||(staffProfile?.active===true&&staffProfile?.role==='owner');
 
 window.openAppointmentActions=function(id,event){
   event?.stopPropagation();const appointment=data.appointments.find(item=>item.id===id);if(!appointment)return;
