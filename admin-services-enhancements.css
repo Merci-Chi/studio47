@@ -18,11 +18,105 @@ html[data-theme="dark"] .modal .star-picker label:hover,html[data-theme="dark"] 
 .review-current-rating .admin-stars{font-size:.9rem}
 html[data-theme="dark"] .review-current-rating{background:#402936;color:#fff5fa;border-color:#85526a}
 
-/* FIX_APPOINTMENT_FILTER_DESKTOP_WIDTH */
-@media(min-width:761px){
-  .appointment-filter-panel{
-    width:min(330px,calc(100vw - 32px))!important;
-    max-width:min(330px,calc(100vw - 32px))!important;
-    min-width:280px!important;
+/* STANDARDIZED_ADMIN_POPUPS */
+:root{--admin-popup-width:520px;--admin-popup-radius:22px;--admin-popup-pad:22px}
+.modal-bg{
+  position:fixed!important;
+  inset:0!important;
+  z-index:1000!important;
+  display:grid!important;
+  place-items:center!important;
+  padding:12px!important;
+  background:#28051999!important;
+  overflow:hidden!important;
+}
+.modal{
+  box-sizing:border-box!important;
+  width:min(var(--admin-popup-width),calc(100vw - 24px))!important;
+  max-width:min(var(--admin-popup-width),calc(100vw - 24px))!important;
+  min-width:0!important;
+  max-height:calc(100dvh - 24px)!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+  overscroll-behavior:contain!important;
+  padding:var(--admin-popup-pad)!important;
+  border-radius:var(--admin-popup-radius)!important;
+  margin:0!important;
+}
+.modal-head{
+  position:sticky!important;
+  top:calc(var(--admin-popup-pad) * -1)!important;
+  z-index:3!important;
+  margin:calc(var(--admin-popup-pad) * -1) calc(var(--admin-popup-pad) * -1) 18px!important;
+  padding:var(--admin-popup-pad)!important;
+  background:inherit!important;
+}
+.modal-actions{
+  position:sticky!important;
+  bottom:calc(var(--admin-popup-pad) * -1)!important;
+  z-index:3!important;
+  margin:20px calc(var(--admin-popup-pad) * -1) calc(var(--admin-popup-pad) * -1)!important;
+  padding:14px var(--admin-popup-pad) var(--admin-popup-pad)!important;
+  background:inherit!important;
+}
+
+/* Appointment filters use the exact same centered popup shell. */
+.appointment-filter-panel{
+  position:fixed!important;
+  z-index:1002!important;
+  top:50%!important;
+  left:50%!important;
+  right:auto!important;
+  bottom:auto!important;
+  transform:translate(-50%,-50%)!important;
+  box-sizing:border-box!important;
+  width:min(var(--admin-popup-width),calc(100vw - 24px))!important;
+  max-width:min(var(--admin-popup-width),calc(100vw - 24px))!important;
+  min-width:0!important;
+  max-height:calc(100dvh - 24px)!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+  overscroll-behavior:contain!important;
+  padding:var(--admin-popup-pad)!important;
+  border-radius:var(--admin-popup-radius)!important;
+  margin:0!important;
+  background:#fff!important;
+  box-shadow:0 24px 70px #26091455!important;
+}
+.appointment-filter-panel[hidden]{display:none!important}
+.appointment-filter-backdrop{z-index:1001!important;background:#28051999!important}
+.appointment-filter-head{
+  position:sticky!important;
+  top:calc(var(--admin-popup-pad) * -1)!important;
+  z-index:3!important;
+  margin:calc(var(--admin-popup-pad) * -1) calc(var(--admin-popup-pad) * -1) 16px!important;
+  padding:var(--admin-popup-pad)!important;
+  background:inherit!important;
+}
+.appointment-filter-actions{
+  position:sticky!important;
+  bottom:calc(var(--admin-popup-pad) * -1)!important;
+  z-index:3!important;
+  margin:14px calc(var(--admin-popup-pad) * -1) calc(var(--admin-popup-pad) * -1)!important;
+  padding:12px var(--admin-popup-pad) var(--admin-popup-pad)!important;
+  background:inherit!important;
+}
+html[data-theme="dark"] .appointment-filter-panel{background:#2a1a22!important;color:#fff8fb!important;border-color:#73435a!important}
+html[data-theme="dark"] .appointment-filter-head,html[data-theme="dark"] .appointment-filter-actions{background:#2a1a22!important}
+
+@media(max-width:560px){
+  :root{--admin-popup-pad:16px;--admin-popup-radius:18px}
+  .modal,.appointment-filter-panel{
+    width:calc(100vw - 20px)!important;
+    max-width:calc(100vw - 20px)!important;
+    max-height:calc(100dvh - 20px)!important;
   }
+  .modal .form-grid{grid-template-columns:1fr!important}
+  .modal .field.full{grid-column:auto!important}
+  .modal-actions{display:grid!important;grid-template-columns:1fr!important;gap:8px!important}
+  .modal-actions button{width:100%!important;min-height:46px!important}
+  .appointment-filter-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
+  .appointment-filter-panel input,.appointment-filter-panel select{min-height:46px!important;font-size:16px!important}
 }
