@@ -119,6 +119,26 @@ if(typeof originalStudio47Login==='function'){
 new MutationObserver(enhanceStudio47CredentialAutofill).observe(document.querySelector('#root')||document.body,{childList:true,subtree:true});
 enhanceStudio47CredentialAutofill();
 
+/* Show the current star rating inside review add/edit popups. */
+function enhanceReviewStarRatingDisplay(){
+  document.querySelectorAll('.star-picker').forEach(picker=>{
+    if(picker.dataset.currentRatingReady)return;
+    picker.dataset.currentRatingReady='true';
+    const readout=document.createElement('div');
+    readout.className='review-current-rating';
+    const paint=()=>{
+      const checked=picker.querySelector('input[name="rating"]:checked');
+      const rating=Math.max(1,Math.min(5,Number(checked?.value)||5));
+      readout.innerHTML=`<span>Current rating: ${rating} / 5</span><span class="admin-stars">${'★'.repeat(rating)}${'☆'.repeat(5-rating)}</span>`;
+    };
+    picker.insertAdjacentElement('afterend',readout);
+    picker.addEventListener('change',paint);
+    paint();
+  });
+}
+new MutationObserver(enhanceReviewStarRatingDisplay).observe(document.querySelector('#overlay')||document.body,{childList:true,subtree:true});
+enhanceReviewStarRatingDisplay();
+
 /* Keep the installed Studio 47 web app in sync with GitHub Pages deployments. */
 if('serviceWorker' in navigator){
   let reloadingForUpdate=false;
