@@ -1,0 +1,31 @@
+name: Raise Studio 47 mobile header
+on:
+  push:
+    paths:
+      - '.github/workflows/raise-mobile-header.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch admin mobile header position
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('admin.html')
+          s=p.read_text()
+          old=".topbar{top:max(10px,env(safe-area-inset-top))!important;height:70px!important;margin-top:max(10px,env(safe-area-inset-top))!important;padding:0 14px!important}"
+          new=".topbar{top:env(safe-area-inset-top)!important;height:64px!important;margin-top:env(safe-area-inset-top)!important;padding:0 14px!important}"
+          if old not in s:
+              raise SystemExit('Target mobile topbar rule not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+          rm .github/workflows/raise-mobile-header.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin.html .github/workflows/raise-mobile-header.yml
+          git commit -m "Raise Studio 47 mobile header"
+          git push
