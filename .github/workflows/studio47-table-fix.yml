@@ -44,12 +44,20 @@ jobs:
                   continue
               original = text
 
-              # Supabase JS client references. This deliberately changes only
-              # .from(TABLE) calls, not UI labels or site_content section names.
+              # Direct Supabase JS client references.
               for old, new in table_map.items():
                   text = text.replace(f".from('{old}')", f".from('{new}')")
                   text = text.replace(f'.from("{old}")', f'.from("{new}")')
                   text = text.replace(f'.from(`{old}`)', f'.from(`{new}`)')
+
+              # Studio 47 admin also stores table names in config/ternary strings.
+              text = text.replace("table:'site_content'", "table:'studio47-site_content'")
+              text = text.replace("table:'services'", "table:'studio47-services'")
+              text = text.replace("table:'reviews'", "table:'studio47-reviews'")
+              text = text.replace("table:'appointments'", "table:'studio47-appointments'")
+              text = text.replace("table:'staff_profiles'", "table:'studio47-staff_profiles'")
+              text = text.replace("pageName==='reviews'?'reviews':'services'", "pageName==='reviews'?'studio47-reviews':'studio47-services'")
+              text = text.replace('pageName==="reviews"?"reviews":"services"', 'pageName==="reviews"?"studio47-reviews":"studio47-services"')
 
               # SQL references need quoted identifiers because the new names contain hyphens.
               if path.suffix.lower() == '.sql':
