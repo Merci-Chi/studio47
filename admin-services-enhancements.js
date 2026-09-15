@@ -168,3 +168,27 @@ if('serviceWorker' in navigator){
   });
   registerStudio47Updater();
 }
+
+/* Shared Help / Requests now uses the main wfxuxrvygyzonkflpwoq Supabase project. */
+submitHelpRequest=async function(event){
+  event.preventDefault();
+  const form=event.currentTarget,button=form.querySelector('button[type="submit"]'),message=document.querySelector('#helpMessage'),fields=Object.fromEntries(new FormData(form));
+  const request={request_type:fields.request_type,priority:fields.priority,page:fields.page,subject:String(fields.subject||'').trim(),details:String(fields.details||'').trim(),status:'new',submitted_by:session?.user?.email||'',submitted_at:new Date().toISOString(),source_site:'Studio 47',source_url:location.origin+location.pathname,browser:navigator.userAgent};
+  if(!request.subject||!request.details)return;
+  button.disabled=true;message.className='help-message';message.textContent='Sending…';
+  try{
+    const {data:remoteId,error}=await db.rpc('submit_website_request',{p_request_type:request.request_type,p_priority:request.priority,p_page:request.page,p_subject:request.subject,p_details:request.details,p_submitted_by:request.submitted_by,p_source_site:request.source_site,p_source_url:request.source_url,p_browser:request.browser});
+    if(error)throw error;
+    request.remote_id=remoteId;
+    const {error:localError}=await db.from('studio47-site_content').insert({section:'website_requests',content_key:`website_request_${Date.now()}`,content_value:JSON.stringify(request),title:request.subject,image_url:'',sort_order:0,is_live:false});
+    if(localError)throw new Error('Request was sent, but Recent Requests could not update: '+localError.message);
+    form.reset();message.className='help-message success';message.textContent='Your request was sent.';toast('Request sent');await load();
+  }catch(error){message.className='help-message error';message.textContent=error?.message||'The request could not be sent.'}
+  finally{button.disabled=false}
+};
+
+deleteHelpRequest=async function(localId,remoteId){
+  if(!confirm('Delete this request?'))return;
+  if(remoteId){const {error}=await db.rpc('delete_website_request',{p_request_id:remoteId});if(error)return alert(error.message)}
+  const {error}=await db.from('studio47-site_content').delete().eq('id',localId);if(error)return alert(error.message);toast('Request deleted');await load();
+};
