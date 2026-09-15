@@ -1,0 +1,77 @@
+name: Update Studio 47 Supabase table references
+
+on:
+  push:
+    paths:
+      - '.github/workflows/studio47-table-fix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-table-references:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Point Studio 47 code to studio47-prefixed tables
+        shell: python
+        run: |
+          from pathlib import Path
+
+          root = Path('.')
+          table_map = {
+              'appointments': 'studio47-appointments',
+              'reviews': 'studio47-reviews',
+              'services': 'studio47-services',
+              'site_content': 'studio47-site_content',
+              'staff_profiles': 'studio47-staff_profiles',
+          }
+          extensions = {'.html', '.js', '.ts', '.sql', '.md'}
+          changed = []
+
+          for path in root.rglob('*'):
+              if not path.is_file() or path.suffix.lower() not in extensions:
+                  continue
+              if '.git' in path.parts or path.as_posix() == '.github/workflows/studio47-table-fix.yml':
+                  continue
+              try:
+                  text = path.read_text(encoding='utf-8')
+              except UnicodeDecodeError:
+                  continue
+              original = text
+
+              # Supabase JS client references. This deliberately changes only
+              # .from(TABLE) calls, not UI labels or site_content section names.
+              for old, new in table_map.items():
+                  text = text.replace(f".from('{old}')", f".from('{new}')")
+                  text = text.replace(f'.from("{old}")', f'.from("{new}")')
+                  text = text.replace(f'.from(`{old}`)', f'.from(`{new}`)')
+
+              # SQL references need quoted identifiers because the new names contain hyphens.
+              if path.suffix.lower() == '.sql':
+                  for old, new in table_map.items():
+                      text = text.replace(f'public.{old}', f'public."{new}"')
+
+              if text != original:
+                  path.write_text(text, encoding='utf-8')
+                  changed.append(path.as_posix())
+
+          print('Changed files:')
+          for path in changed:
+              print(' -', path)
+
+      - name: Commit updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No table references needed changing."
+            exit 0
+          fi
+          git commit -m "Point Studio 47 to prefixed Supabase tables"
+          git push
