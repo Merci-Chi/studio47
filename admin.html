@@ -375,7 +375,7 @@ const formatDayHeading=date=>new Date(`${date}T12:00:00`).toLocaleDateString('en
 
 appointmentsManager=function(){
   const stylists=[...new Set(data.appointments.map(x=>x.stylist).filter(Boolean))].sort(),types=[...new Set(data.appointments.map(x=>x.service_type).filter(Boolean))].sort();
-  document.querySelector('#view').innerHTML=`<section class="appointment-page"><div class="appointment-page-head"><div class="appointment-title"><div class="eyebrow">Schedule</div><h1>Appointments</h1><p>View and manage your upcoming appointments.</p></div><div class="appointment-head-actions"><div class="appointment-filter-wrap"><button class="appointment-filter-btn" id="appointmentFilterButton" type="button" aria-expanded="false"><i class="fa-solid fa-sliders"></i> Filter</button><div class="appointment-filter-panel" id="appointmentFilterPanel" hidden><input id="appointmentDay" type="date" aria-label="Date"><select id="appointmentStylist"><option value="">All stylists</option>${stylists.map(x=>`<option>${esc(x)}</option>`).join('')}</select><select id="appointmentType"><option value="">All services</option>${types.map(x=>`<option>${esc(x)}</option>`).join('')}</select><select id="appointmentStatus"><option value="">All statuses</option><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="cancelled">Cancelled</option></select><select id="appointmentSort"><option value="asc">Soonest first</option><option value="desc">Latest first</option></select><button class="filter-reset" id="appointmentFilterReset" type="button">Reset filters</button></div></div><button class="appointment-add-btn" id="addAppointment" type="button" aria-label="Set appointment"><i class="fa-solid fa-plus"></i></button></div></div><div class="appointment-groups" id="appointmentRows"></div></section>`;
+  document.querySelector('#view').innerHTML=`<section class="appointment-page"><div class="appointment-page-head"><div class="appointment-title"><div class="eyebrow">Schedule</div><h1>Appointments</h1><p>View and manage your upcoming appointments.</p></div><div class="appointment-head-actions"><div class="appointment-filter-wrap"><button class="appointment-filter-trigger-new" id="appointmentFilterButton" type="button" aria-expanded="false" aria-haspopup="dialog"><i class="fa-solid fa-sliders"></i><span>Filter</span></button><div class="studio47-filter-modal" id="appointmentFilterPanel" role="dialog" aria-modal="true" aria-labelledby="appointmentFilterTitle" hidden><input id="appointmentDay" type="date" aria-label="Date"><select id="appointmentStylist"><option value="">All stylists</option>${stylists.map(x=>`<option>${esc(x)}</option>`).join('')}</select><select id="appointmentType"><option value="">All services</option>${types.map(x=>`<option>${esc(x)}</option>`).join('')}</select><select id="appointmentStatus"><option value="">All statuses</option><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="cancelled">Cancelled</option></select><select id="appointmentSort"><option value="asc">Soonest first</option><option value="desc">Latest first</option></select><button class="filter-reset" id="appointmentFilterReset" type="button">Reset filters</button></div></div><button class="appointment-add-btn" id="addAppointment" type="button" aria-label="Set appointment"><i class="fa-solid fa-plus"></i></button></div></div><div class="appointment-groups" id="appointmentRows"></div></section>`;
   const panel=document.querySelector('#appointmentFilterPanel'),button=document.querySelector('#appointmentFilterButton');
   button.onclick=()=>{const open=panel.hidden;panel.hidden=!open;button.setAttribute('aria-expanded',String(open))};
   document.querySelector('#addAppointment').onclick=()=>appointmentEditor();
@@ -1495,4 +1495,387 @@ const appBeforeNotifications=app;
 .appointment-filter-btn{position:relative!important;padding:0!important;}
 .appointment-filter-btn i{position:absolute!important;left:50%!important;top:50%!important;margin:0!important;width:max-content!important;height:max-content!important;line-height:1!important;transform:translate(-50%,-50%)!important;display:block!important;}
 </style>
-<script src="admin-appointment-time-picker.js"></script></body></html>
+<script src="admin-appointment-time-picker.js"></script>
+<style id="studio47-unified-popup-redesign">
+/* =========================================================
+   Studio 47 unified popup system + rebuilt appointment filter
+   ========================================================= */
+:root{
+  --studio47-popup-width:520px;
+  --studio47-popup-radius:22px;
+  --studio47-popup-gap:12px;
+}
+
+/* Rebuilt Filter trigger: independent of all older filter-button rules. */
+.appointment-filter-trigger-new{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  min-width:112px!important;
+  height:46px!important;
+  padding:0 17px!important;
+  border:1px solid #e2a0bd!important;
+  border-radius:14px!important;
+  background:#fff!important;
+  color:#3a1828!important;
+  box-shadow:0 8px 22px #7a1a4710!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:9px!important;
+  font-size:.82rem!important;
+  font-weight:900!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+.appointment-filter-trigger-new i{
+  position:static!important;
+  inset:auto!important;
+  width:auto!important;
+  height:auto!important;
+  margin:0!important;
+  transform:none!important;
+  font-size:.9rem!important;
+  line-height:1!important;
+}
+.appointment-filter-trigger-new span{display:inline!important}
+.appointment-filter-trigger-new:hover{background:#fff7fb!important;border-color:#d879a5!important}
+.appointment-filter-trigger-new:focus-visible{outline:3px solid #cf0d7633!important;outline-offset:2px!important}
+html[data-theme="dark"] .appointment-filter-trigger-new{
+  background:#191216!important;color:#fff5fa!important;border-color:#6b3850!important;
+}
+
+/* Every true modal popup uses the same centered footprint on desktop and mobile. */
+.modal-bg,
+.time-picker-backdrop,
+.studio47-filter-backdrop{
+  position:fixed!important;
+  inset:0!important;
+}
+.modal-bg{
+  z-index:90!important;
+  display:grid!important;
+  place-items:center!important;
+  align-items:center!important;
+  justify-items:center!important;
+  padding:12px!important;
+  background:#28051999!important;
+  overflow:hidden!important;
+}
+.time-picker-backdrop{z-index:94!important;background:#1e08148c!important;border:0!important}
+.studio47-filter-backdrop{
+  z-index:96!important;
+  border:0!important;
+  background:#28051999!important;
+}
+
+.modal,
+.time-picker-sheet,
+.calendar-picker-sheet,
+.studio47-filter-modal{
+  box-sizing:border-box!important;
+  width:min(var(--studio47-popup-width),calc(100vw - 24px))!important;
+  min-width:0!important;
+  max-width:min(var(--studio47-popup-width),calc(100vw - 24px))!important;
+  max-height:calc(100dvh - 24px)!important;
+  border-radius:var(--studio47-popup-radius)!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+  box-shadow:0 24px 72px #2609144d!important;
+}
+
+/* Normal app dialogs. */
+.modal{
+  position:relative!important;
+  inset:auto!important;
+  margin:0!important;
+  padding:22px!important;
+  background:#fff!important;
+}
+.modal-head{
+  position:sticky!important;
+  top:-22px!important;
+  z-index:4!important;
+  margin:-22px -22px 18px!important;
+  padding:18px 22px 14px!important;
+  background:inherit!important;
+  border-bottom:1px solid var(--line)!important;
+}
+.modal-actions{
+  position:sticky!important;
+  bottom:-22px!important;
+  z-index:4!important;
+  margin:20px -22px -22px!important;
+  padding:14px 22px 18px!important;
+  background:inherit!important;
+  border-top:1px solid var(--line)!important;
+}
+html[data-theme="dark"] .modal{background:#2a1a22!important}
+
+/* Time wheel uses the same popup size instead of a bottom sheet. */
+.time-picker-sheet{
+  position:fixed!important;
+  z-index:95!important;
+  left:50%!important;
+  top:50%!important;
+  right:auto!important;
+  bottom:auto!important;
+  inset:auto!important;
+  transform:translate(-50%,-50%)!important;
+  margin:0!important;
+  padding:22px!important;
+  background:#fff!important;
+}
+html[data-theme="dark"] .time-picker-sheet{background:#151014!important}
+
+/* Brand-new centered Appointments filter modal. */
+.studio47-filter-modal{
+  position:fixed!important;
+  z-index:97!important;
+  left:50%!important;
+  top:50%!important;
+  right:auto!important;
+  bottom:auto!important;
+  transform:translate(-50%,-50%)!important;
+  margin:0!important;
+  padding:22px!important;
+  display:grid!important;
+  gap:13px!important;
+  background:#fff!important;
+  color:var(--ink)!important;
+  border:1px solid var(--line)!important;
+}
+.studio47-filter-modal[hidden]{display:none!important}
+html[data-theme="dark"] .studio47-filter-modal{
+  background:#21151b!important;color:#fff5fa!important;border-color:#603047!important;
+}
+.studio47-filter-modal .appointment-filter-head{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:12px!important;
+  margin:-4px 0 3px!important;
+  padding:0 0 13px!important;
+  border-bottom:1px solid var(--line)!important;
+}
+.studio47-filter-modal .appointment-filter-head strong{
+  min-width:0!important;
+  max-width:none!important;
+  white-space:normal!important;
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+  font:400 1.5rem/1.1 Georgia,serif!important;
+}
+.studio47-filter-modal .appointment-filter-close{
+  width:40px!important;height:40px!important;min-width:40px!important;
+  border:0!important;border-radius:50%!important;
+  display:grid!important;place-items:center!important;
+}
+.studio47-filter-modal .appointment-filter-field{
+  display:grid!important;
+  gap:6px!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.studio47-filter-modal .appointment-filter-field>span{
+  font-size:.68rem!important;
+  font-weight:900!important;
+  letter-spacing:.08em!important;
+  text-transform:uppercase!important;
+}
+.studio47-filter-modal input,
+.studio47-filter-modal select{
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  height:48px!important;
+  padding:0 13px!important;
+  border:1px solid #ecc5d7!important;
+  border-radius:13px!important;
+  background:var(--blush)!important;
+  color:var(--ink)!important;
+  font-size:16px!important;
+}
+html[data-theme="dark"] .studio47-filter-modal input,
+html[data-theme="dark"] .studio47-filter-modal select{
+  background:#2c1a23!important;color:#fff!important;border-color:#704058!important;
+}
+.studio47-filter-modal .appointment-filter-actions{
+  position:sticky!important;
+  bottom:-22px!important;
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:9px!important;
+  margin:5px -22px -22px!important;
+  padding:14px 22px 18px!important;
+  background:inherit!important;
+  border-top:1px solid var(--line)!important;
+}
+.studio47-filter-modal .filter-reset,
+.studio47-filter-modal .appointment-filter-done{
+  width:100%!important;
+  min-height:46px!important;
+  border-radius:12px!important;
+  font-weight:900!important;
+}
+.studio47-filter-modal .filter-reset{
+  border:1px solid var(--line)!important;
+  background:#fff0f6!important;
+  color:var(--wine)!important;
+}
+.studio47-filter-modal .appointment-filter-done{
+  border:0!important;background:var(--pink)!important;color:#fff!important;
+}
+
+/* Make form layouts mobile-friendly inside the same-size modal. */
+.modal input,.modal select,.modal textarea,
+.time-picker-sheet input,.time-picker-sheet select,
+.calendar-picker-sheet input,.calendar-picker-sheet select{
+  max-width:100%!important;
+  min-width:0!important;
+}
+@media(max-width:600px){
+  .appointment-filter-trigger-new{
+    min-width:46px!important;width:46px!important;height:46px!important;padding:0!important;
+    border-radius:13px!important;
+  }
+  .appointment-filter-trigger-new span{display:none!important}
+  .form-grid{grid-template-columns:1fr!important}
+  .field.full{grid-column:auto!important}
+  .modal,.time-picker-sheet,.calendar-picker-sheet,.studio47-filter-modal{
+    width:calc(100vw - 16px)!important;
+    max-width:calc(100vw - 16px)!important;
+    max-height:calc(100dvh - 16px)!important;
+    border-radius:20px!important;
+  }
+  .modal{padding:18px!important}
+  .modal-head{
+    top:-18px!important;
+    margin:-18px -18px 16px!important;
+    padding:16px 18px 13px!important;
+  }
+  .modal-actions{
+    bottom:-18px!important;
+    margin:18px -18px -18px!important;
+    padding:13px 18px 16px!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+  }
+  .modal-actions button{width:100%!important;min-height:46px!important}
+  .studio47-filter-modal{padding:18px!important}
+  .studio47-filter-modal .appointment-filter-actions{
+    bottom:-18px!important;
+    margin:5px -18px -18px!important;
+    padding:13px 18px 16px!important;
+  }
+  .time-picker-sheet{padding:18px!important}
+}
+</style>
+
+<script id="studio47-rebuilt-filter-controller">
+(() => {
+  const previousAppointmentsManager = window.appointmentsManager;
+
+  function removeOldDetachedFilter(){
+    document.querySelectorAll('body > #appointmentFilterPanel').forEach(el => el.remove());
+    document.querySelectorAll('.appointment-filter-backdrop,#studio47FilterBackdrop').forEach(el => el.remove());
+  }
+
+  window.appointmentsManager = function(){
+    removeOldDetachedFilter();
+    previousAppointmentsManager.apply(this, arguments);
+
+    const oldButton = document.querySelector('#appointmentFilterButton');
+    const panel = document.querySelector('#appointmentFilterPanel');
+    if(!oldButton || !panel) return;
+
+    /* Completely replace the old trigger node so none of its old handlers/styles survive. */
+    const freshButton = document.createElement('button');
+    freshButton.type = 'button';
+    freshButton.id = 'appointmentFilterButton';
+    freshButton.className = 'appointment-filter-trigger-new';
+    freshButton.setAttribute('aria-expanded','false');
+    freshButton.setAttribute('aria-haspopup','dialog');
+    freshButton.innerHTML = '<i class="fa-solid fa-sliders"></i><span>Filter</span>';
+    oldButton.replaceWith(freshButton);
+
+    /* Remove the old mobile-filter backdrop/controller artifacts. */
+    document.querySelectorAll('.appointment-filter-backdrop').forEach(el => el.remove());
+
+    panel.classList.remove('appointment-filter-panel');
+    panel.classList.add('studio47-filter-modal');
+    panel.setAttribute('role','dialog');
+    panel.setAttribute('aria-modal','true');
+
+    /* Rebuild the modal header cleanly so duplicate enhancement passes cannot stack it. */
+    panel.querySelectorAll('.appointment-filter-head').forEach(el => el.remove());
+    const head = document.createElement('div');
+    head.className = 'appointment-filter-head';
+    head.innerHTML = '<strong id="appointmentFilterTitle">Filter appointments</strong><button class="appointment-filter-close" type="button" aria-label="Close filters"><i class="fa-solid fa-xmark"></i></button>';
+    panel.prepend(head);
+    panel.setAttribute('aria-labelledby','appointmentFilterTitle');
+
+    /* Ensure there is exactly one footer action group. */
+    let actions = panel.querySelector('.appointment-filter-actions');
+    const reset = panel.querySelector('#appointmentFilterReset');
+    if(!actions){
+      actions = document.createElement('div');
+      actions.className = 'appointment-filter-actions';
+      if(reset) reset.before(actions);
+    }
+    actions.querySelectorAll('.appointment-filter-done').forEach(el => el.remove());
+    if(reset && reset.parentElement !== actions) actions.appendChild(reset);
+    const done = document.createElement('button');
+    done.type = 'button';
+    done.className = 'appointment-filter-done';
+    done.textContent = 'Done';
+    actions.appendChild(done);
+
+    /* Put the popup at document level so parent widths can never collapse it again. */
+    document.body.appendChild(panel);
+    panel.hidden = true;
+
+    const backdrop = document.createElement('button');
+    backdrop.type = 'button';
+    backdrop.id = 'studio47FilterBackdrop';
+    backdrop.className = 'studio47-filter-backdrop';
+    backdrop.setAttribute('aria-label','Close filters');
+    backdrop.hidden = true;
+    document.body.appendChild(backdrop);
+
+    const close = () => {
+      panel.hidden = true;
+      backdrop.hidden = true;
+      freshButton.setAttribute('aria-expanded','false');
+      document.body.style.overflow = '';
+      freshButton.focus({preventScroll:true});
+    };
+
+    const open = () => {
+      panel.hidden = false;
+      backdrop.hidden = false;
+      freshButton.setAttribute('aria-expanded','true');
+      document.body.style.overflow = 'hidden';
+      requestAnimationFrame(() => panel.querySelector('.appointment-filter-close')?.focus({preventScroll:true}));
+    };
+
+    freshButton.onclick = open;
+    backdrop.onclick = close;
+    panel.querySelector('.appointment-filter-close').onclick = close;
+    done.onclick = close;
+
+    const onEscape = event => {
+      if(event.key === 'Escape' && !panel.hidden){
+        event.preventDefault();
+        close();
+      }
+    };
+    document.addEventListener('keydown', onEscape, {once:false});
+  };
+})();
+</script>
+
+</body></html>
