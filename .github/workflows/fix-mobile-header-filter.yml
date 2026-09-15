@@ -1,0 +1,36 @@
+name: Fix Studio 47 mobile header spacing and filter alignment
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-mobile-header-filter.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch mobile header and filter icon
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('admin.html')
+          s=p.read_text()
+          old='''.topbar{top:max(10px,env(safe-area-inset-top))!important;height:70px!important;margin-top:max(10px,env(safe-area-inset-top))!important;padding:0 14px!important}.mobile-menu-toggle,#translatorButton,#themeToggle{display:grid!important;width:50px!important;height:50px!important;min-width:50px!important;min-height:50px!important;border-radius:13px!important;font-size:1.25rem!important;place-items:center!important}.top-actions{gap:10px!important}.translator-panel{top:74px!important}.appointment-filter-btn{justify-content:center!important}.appointment-filter-btn i{width:20px!important;height:20px!important;display:grid!important;place-items:center!important;line-height:1!important;margin:0!important}'''
+          new='''.topbar{top:max(8px,env(safe-area-inset-top))!important;height:60px!important;margin-top:8px!important;padding:0 12px!important}.mobile-menu-toggle,#translatorButton,#themeToggle{display:grid!important;width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;border-radius:12px!important;font-size:1.12rem!important;place-items:center!important}.top-actions{gap:8px!important}.translator-panel{top:64px!important}.appointment-filter-btn{justify-content:center!important;align-items:center!important}.appointment-filter-btn i{width:20px!important;height:20px!important;display:flex!important;align-items:center!important;justify-content:center!important;line-height:20px!important;margin:0!important;position:relative!important;top:1px!important}'''
+          if old not in s:
+              raise SystemExit('target mobile header/filter CSS not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Remove temporary workflow
+        run: rm .github/workflows/fix-mobile-header-filter.yml
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add admin.html .github/workflows/fix-mobile-header-filter.yml
+          git commit -m 'Fix mobile header spacing and filter icon alignment'
+          git push origin main
