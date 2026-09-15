@@ -84,3 +84,33 @@ if(typeof originalStudio47Login==='function'){
 }
 new MutationObserver(enhanceStudio47CredentialAutofill).observe(document.querySelector('#root')||document.body,{childList:true,subtree:true});
 enhanceStudio47CredentialAutofill();
+
+/* Keep the installed Studio 47 web app in sync with GitHub Pages deployments. */
+if('serviceWorker' in navigator){
+  let reloadingForUpdate=false;
+  const registerStudio47Updater=async()=>{
+    try{
+      const registration=await navigator.serviceWorker.register('./studio47-sw.js',{scope:'./',updateViaCache:'none'});
+      const activateWaiting=()=>{if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'})};
+      activateWaiting();
+      registration.addEventListener('updatefound',()=>{
+        const worker=registration.installing;
+        if(!worker)return;
+        worker.addEventListener('statechange',()=>{
+          if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});
+        });
+      });
+      const check=()=>registration.update().catch(()=>{});
+      check();
+      document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check()});
+      window.addEventListener('pageshow',check);
+      setInterval(check,5*60*1000);
+    }catch(error){console.warn('Studio 47 update worker unavailable',error)}
+  };
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(reloadingForUpdate)return;
+    reloadingForUpdate=true;
+    location.reload();
+  });
+  registerStudio47Updater();
+}
