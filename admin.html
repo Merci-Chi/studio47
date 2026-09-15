@@ -1469,4 +1469,11 @@ const appBeforeNotifications=app;
   .topbar{position:sticky!important;top:0!important;margin-top:0!important;}
 }
 </style>
+
+<style>
+/* MOBILE_SAFE_AREA_BREATHER */
+@media(max-width:760px){
+  .topbar{top:0!important;margin-top:0!important;height:calc(60px + env(safe-area-inset-top))!important;padding-top:env(safe-area-inset-top)!important;box-sizing:border-box!important;}
+}
+</style>
 </body></html>
