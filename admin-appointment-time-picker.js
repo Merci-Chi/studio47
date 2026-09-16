@@ -114,3 +114,31 @@
     };
   };
 })();
+
+/* Compatibility fix: the Studio 47 database uses `studio47-staff_profiles`, while older admin code still calls `staff_profiles`. */
+(() => {
+  if(!window.__studio47ProfileTableFix){
+    window.__studio47ProfileTableFix=true;
+    const originalFrom=db.from.bind(db);
+    db.from=function(table){
+      return originalFrom(table==='staff_profiles'?'studio47-staff_profiles':table);
+    };
+  }
+
+  (async()=>{
+    try{
+      const current=(await db.auth.getSession()).data.session;
+      if(!current?.user?.id)return;
+      session=current;
+      const {data:profile,error}=await db.from('studio47-staff_profiles')
+        .select('user_id,work_email,recovery_email,stylist_name,team_member_id,role,active')
+        .eq('user_id',current.user.id)
+        .maybeSingle();
+      if(error)return;
+      staffProfile=profile||null;
+      if(current.user.user_metadata?.password_setup_complete&&typeof app==='function')await app();
+    }catch(error){
+      console.error('Studio 47 profile reconnect failed',error);
+    }
+  })();
+})();
