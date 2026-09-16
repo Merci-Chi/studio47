@@ -1398,7 +1398,7 @@ function sendTeamLoginPopup(member){
     return;
   }
 
-  overlay.innerHTML=`<div class="modal-bg"><div class="modal"><div class="modal-head"><h2>Send first login</h2><button class="close" type="button">×</button></div><form id="teamLoginSend"><div class="form-grid"><div class="field full"><label>Team member</label><input value="${esc(member.name||'Team member')}" readonly></div><div class="field full"><label>Login</label><input value="${esc(profile.work_email)}" readonly></div><div class="field full"><label>Phone number</label><input name="phone" type="tel" required inputmode="tel" autocomplete="tel" placeholder="(702) 555-1234" value="${esc(profile.phone_number||'')}"></div><div class="field full"><label>Phone type</label><div class="invite-choice-grid"><label class="invite-choice"><input type="radio" name="device" value="iphone" required><span><i class="fa-brands fa-apple"></i><strong>iPhone</strong></span></label><label class="invite-choice"><input type="radio" name="device" value="android" required><span><i class="fa-brands fa-android"></i><strong>Samsung / Android</strong></span></label></div></div><div class="field full"><label>Language</label><div class="invite-choice-grid"><label class="invite-choice"><input type="radio" name="language" value="english" required><span><i class="fa-solid fa-language"></i><strong>English</strong></span></label><label class="invite-choice"><input type="radio" name="language" value="spanish" required><span><i class="fa-solid fa-language"></i><strong>Español</strong></span></label></div></div><div class="field full"><small>The message will include studio47hairsalon.com/admin, ${esc(profile.work_email)}, the temporary password “password”, and the matching setup image.</small></div></div><div class="modal-actions"><button type="button" class="ghost cancel">Cancel</button><button class="primary" type="submit"><i class="fa-solid fa-paper-plane"></i> Send login</button></div></form></div></div>`;
+  overlay.innerHTML=`<div class="modal-bg"><div class="modal"><div class="modal-head"><h2>Send first login</h2><button class="close" type="button">×</button></div><form id="teamLoginSend"><div class="form-grid"><div class="field full"><label>Team member</label><input value="${esc(member.name||'Team member')}" readonly></div><div class="field full"><label>Login</label><input value="${esc(profile.work_email)}" readonly></div><div class="field full"><label>Phone number</label><input name="phone" type="tel" required inputmode="tel" autocomplete="tel" placeholder="(702) 555-1234" value="${esc(profile.phone_number||'')}"></div><div class="field full"><label>Phone type</label><div class="invite-choice-grid"><label class="invite-choice"><input type="radio" name="device" value="iphone" required><span><i class="fa-brands fa-apple"></i><strong>iPhone</strong></span></label><label class="invite-choice"><input type="radio" name="device" value="android" required><span><i class="fa-brands fa-android"></i><strong>Samsung / Android</strong></span></label></div></div><div class="field full"><label>Language</label><div class="invite-choice-grid"><label class="invite-choice"><input type="radio" name="language" value="english" required><span><i class="fa-solid fa-language"></i><strong>English</strong></span></label><label class="invite-choice"><input type="radio" name="language" value="spanish" required><span><i class="fa-solid fa-language"></i><strong>Español</strong></span></label></div></div><div class="field full"><small>This saves their phone number, then opens Messages with the admin link, username, temporary password “password”, and the matching setup-guide image link.</small></div></div><div class="modal-actions"><button type="button" class="ghost cancel">Cancel</button><button class="primary" type="submit"><i class="fa-solid fa-comment-sms"></i> Open Messages</button></div></form></div></div>`;
 
   const close=()=>overlay.innerHTML='';
   overlay.querySelector('.close').onclick=close;
@@ -1421,27 +1421,68 @@ function sendTeamLoginPopup(member){
 
     if(phoneSaveError){
       button.disabled=false;
-      button.innerHTML='<i class="fa-solid fa-paper-plane"></i> Send login';
+      button.innerHTML='<i class="fa-solid fa-comment-sms"></i> Open Messages';
       return alert(`The phone number could not be saved: ${phoneSaveError.message}`);
     }
 
     profile.phone_number=phone;
 
-    button.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Sending…';
+    const imageMap={
+      iphone:{
+        english:'https://studio47hairsalon.com/Images/studio47_iphone_english.png',
+        spanish:'https://studio47hairsalon.com/Images/studio47_iphone_spanish.png'
+      },
+      android:{
+        english:'https://studio47hairsalon.com/Images/studio47_android_english.png',
+        spanish:'https://studio47hairsalon.com/Images/studio47_android_spanish.png'
+      }
+    };
 
-    const {data:result,error}=await db.functions.invoke('send-team-invite',{body:{team_member_id:member.id,phone,device,language}});
+    const imageUrl=imageMap[device]?.[language]||'';
+    const name=member.name||profile.stylist_name||'';
+    const adminUrl='https://studio47hairsalon.com/admin';
+
+    const message=language==='spanish'
+      ? `¡Hola ${name}! Tu cuenta de administración de Studio 47 está lista.
+
+Sitio de administración:
+${adminUrl}
+
+Usuario:
+${profile.work_email}
+
+Contraseña temporal:
+password
+
+Cuando inicies sesión por primera vez, se te pedirá crear tu propia contraseña.
+
+Guía para agregar Studio 47 Admin a tu teléfono:
+${imageUrl}`
+      : `Hi ${name}! Your Studio 47 admin account is ready.
+
+Admin site:
+${adminUrl}
+
+Username:
+${profile.work_email}
+
+Temporary password:
+password
+
+When you sign in for the first time, you'll be asked to create your own password.
+
+Guide to add Studio 47 Admin to your phone:
+${imageUrl}`;
 
     button.disabled=false;
-    button.innerHTML='<i class="fa-solid fa-paper-plane"></i> Send login';
+    button.innerHTML='<i class="fa-solid fa-paper-plane"></i> Open Messages';
 
-    if(error){
-      let message=error.message||'The login could not be sent.';
-      try{message=(await error.context?.json())?.message||message}catch{}
-      return alert(message);
-    }
+    const cleanedPhone=phone.replace(/[^+\d]/g,'');
+    const separator=device==='iphone'?'&':'?';
+    const smsUrl=`sms:${cleanedPhone}${separator}body=${encodeURIComponent(message)}`;
 
     overlay.innerHTML='';
-    toast(result?.message||'First login instructions sent');
+    window.location.href=smsUrl;
   };
 }
 
