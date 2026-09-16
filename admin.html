@@ -268,7 +268,7 @@ function languageControl(){const selected=localStorage.getItem('studio47_languag
 
 app=function(){pageName='appointments';root.innerHTML=`<div class="app"><aside class="sidebar" id="mobileDrawer"><div class="brand"><img class="sidebar-logo" src="images/logo.png" alt="Studio 47 logo"><div><strong>Studio 47</strong><small>Salon admin · v2</small></div></div><div class="nav-label">Workspace</div><nav class="nav"><button data-page="overview"><span class="ico"><i class="fa-solid fa-house"></i></span>Overview</button><button data-page="reviews"><span class="ico"><i class="fa-solid fa-star"></i></span>Reviews<span class="badge" id="badge">0</span></button><button data-page="content"><span class="ico"><i class="fa-regular fa-images"></i></span>Gallery</button><button data-page="services"><span class="ico"><i class="fa-solid fa-scissors"></i></span>Menu & Pricing</button><button data-page="appointments"><span class="ico"><i class="fa-regular fa-calendar-check"></i></span>Appointments</button><button data-page="team"><span class="ico"><i class="fa-solid fa-user-group"></i></span>Team</button></nav><div class="nav-label">Website</div><nav class="nav"><a href="index.html" target="_blank"><span class="ico"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>View site</a><button id="out"><span class="ico"><i class="fa-solid fa-right-from-bracket"></i></span>Sign out</button></nav><div class="sidebar-card"><small>Website status</small><strong>Connected and ready.</strong><p>Live updates publish automatically.</p></div></aside><button class="mobile-nav-backdrop" id="mobileNavBackdrop" aria-label="Close menu"></button><main><header class="topbar"><button class="icon-btn mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-label="Open menu" aria-expanded="false"><i class="fa-solid fa-bars"></i><i class="fa-solid fa-xmark"></i></button><div class="crumb">Studio 47 / <strong id="crumb">Appointments</strong></div><div class="top-actions"><input class="search" id="search" placeholder="Search current page…">${languageControl()}<button class="icon-btn" id="refresh"><i class="fa-solid fa-rotate"></i></button><button class="avatar">${esc((session.user.email||'SM').slice(0,2).toUpperCase())}</button></div></header><div id="view"><div class="loading">Loading appointments…</div></div></main></div>`;
   const shell=document.querySelector('.app'),toggle=document.querySelector('#mobileMenuToggle'),backdrop=document.querySelector('#mobileNavBackdrop'),closeDrawer=()=>{shell.classList.remove('drawer-open');toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-label','Open menu')},openDrawer=()=>{shell.classList.add('drawer-open');toggle.setAttribute('aria-expanded','true');toggle.setAttribute('aria-label','Close menu')};toggle.onclick=()=>shell.classList.contains('drawer-open')?closeDrawer():openDrawer();backdrop.onclick=closeDrawer;
-  document.querySelectorAll('[data-page]').forEach(button=>button.onclick=()=>{pageName=button.dataset.page;closeDrawer();render()});document.querySelector('#out').onclick=async()=>{await db.auth.signOut();login()};document.querySelector('#refresh').onclick=()=>load(true);document.querySelector('#search').oninput=e=>document.querySelectorAll('#rows tr').forEach(row=>row.hidden=!row.dataset.search.includes(e.target.value.toLowerCase()));
+  document.querySelectorAll('[data-page]').forEach(button=>button.onclick=()=>{pageName=button.dataset.page;closeDrawer();render();requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:'auto'}))});document.querySelector('#out').onclick=async()=>{await db.auth.signOut();login()};document.querySelector('#refresh').onclick=()=>load(true);document.querySelector('#search').oninput=e=>document.querySelectorAll('#rows tr').forEach(row=>row.hidden=!row.dataset.search.includes(e.target.value.toLowerCase()));
   const translateButton=document.querySelector('#translatorButton'),translatePanel=document.querySelector('#translatorPanel');translateButton.onclick=()=>{const opening=translatePanel.hidden;translatePanel.hidden=!opening;translateButton.setAttribute('aria-expanded',String(opening))};document.querySelector('#siteLanguage').onchange=e=>applyLanguage(e.target.value);document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDrawer();translatePanel.hidden=true}});ensureGoogleTranslate();load()
 };
 
@@ -1204,7 +1204,7 @@ app=async function(){
   toggle.onclick=()=>{const open=shell.classList.toggle('drawer-open');toggle.setAttribute('aria-expanded',String(open))};backdrop.onclick=closeDrawer;drawerClose.onclick=closeDrawer;
   document.querySelectorAll('[data-page]').forEach(button=>button.onclick=()=>{pageName=button.dataset.page;closeDrawer();render()});
   document.querySelector('#out').onclick=async()=>{await db.auth.signOut();staffProfile=null;login()};document.querySelector('#refresh').onclick=()=>load(true);
-  const translateButton=document.querySelector('#translatorButton'),translatePanel=document.querySelector('#translatorPanel'),translateClose=document.querySelector('#translatorClose'),closeTranslate=()=>{translatePanel.hidden=true;translateButton.setAttribute('aria-expanded','false');document.removeEventListener('pointerdown',outsideTranslate)},outsideTranslate=event=>{if(!event.target.closest('.translator'))closeTranslate()};translateButton.onclick=event=>{event.stopPropagation();const opening=translatePanel.hidden;translatePanel.hidden=!opening;translateButton.setAttribute('aria-expanded',String(opening));document.removeEventListener('pointerdown',outsideTranslate);if(opening)setTimeout(()=>document.addEventListener('pointerdown',outsideTranslate),0)};translatePanel.onclick=event=>event.stopPropagation();translateClose.onclick=closeTranslate;document.querySelector('#siteLanguage').onchange=event=>applyLanguage(event.target.value);document.addEventListener('keydown',event=>{if(event.key==='Escape')closeTranslate()});installThemeToggle();ensureGoogleTranslate();load();
+  const translateButton=document.querySelector('#translatorButton'),translatePanel=document.querySelector('#translatorPanel'),translateClose=document.querySelector('#translatorClose'),closeTranslate=()=>{translatePanel.hidden=true;translateButton.setAttribute('aria-expanded','false');document.removeEventListener('pointerdown',outsideTranslate)},outsideTranslate=event=>{if(!event.target.closest('.translator'))closeTranslate()};translateButton.onclick=event=>{event.stopPropagation();const opening=translatePanel.hidden;translatePanel.hidden=!opening;translateButton.setAttribute('aria-expanded',String(opening));document.removeEventListener('pointerdown',outsideTranslate);if(opening)setTimeout(()=>document.addEventListener('pointerdown',outsideTranslate),0)};translatePanel.onclick=event=>event.stopPropagation();translateClose.onclick=closeTranslate;document.querySelector('#siteLanguage').onchange=event=>applyLanguage(event.target.value);document.addEventListener('keydown',event=>{if(event.key==='Escape')closeTranslate()});installThemeToggle();ensureGoogleTranslate();await load();requestAnimationFrame(()=>{window.scrollTo({top:0,left:0,behavior:'auto'});document.documentElement.scrollTop=0;document.body.scrollTop=0;});
 };
 
 load=async function(note=false){
@@ -2169,6 +2169,56 @@ html[data-theme="dark"] .table-wrap tr{background:#191216!important}
     if(top){ const close=top.querySelector('.close,.cancel,[aria-label*="Close"]'); close?.click(); }
   });
 })();
+</script>
+
+<style>
+/* FINAL_ALWAYS_VISIBLE_MOBILE_HEADER */
+@media(max-width:760px){
+  :root{--mobile-fixed-header-height:calc(60px + env(safe-area-inset-top));}
+  .topbar{
+    position:fixed!important;
+    top:0!important;
+    left:10px!important;
+    right:10px!important;
+    width:auto!important;
+    height:var(--mobile-fixed-header-height)!important;
+    margin:0!important;
+    padding:env(safe-area-inset-top) 12px 0!important;
+    z-index:140!important;
+    box-sizing:border-box!important;
+    background:#f8f3f6!important;
+    border:1px solid var(--line)!important;
+    border-top:0!important;
+    border-radius:0 0 14px 14px!important;
+    box-shadow:0 10px 28px #46082b1c!important;
+  }
+  html[data-theme="dark"] .topbar{background:#151014!important;}
+  #view{
+    padding-top:calc(var(--mobile-fixed-header-height) + 10px)!important;
+  }
+  .translator-panel{
+    position:fixed!important;
+    top:calc(var(--mobile-fixed-header-height) + 6px)!important;
+    right:10px!important;
+    max-height:calc(100dvh - var(--mobile-fixed-header-height) - env(safe-area-inset-bottom) - 18px)!important;
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+    overscroll-behavior:contain!important;
+    z-index:150!important;
+  }
+}
+</style>
+<script>
+/* Always start a freshly opened/signed-in admin session at the top. */
+window.addEventListener('pageshow',()=>{
+  if(location.hash==='#appointments' || !location.hash){
+    requestAnimationFrame(()=>{
+      window.scrollTo({top:0,left:0,behavior:'auto'});
+      document.documentElement.scrollTop=0;
+      document.body.scrollTop=0;
+    });
+  }
+});
 </script>
 
 </body></html>
