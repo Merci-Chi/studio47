@@ -2487,60 +2487,98 @@ html[data-theme="dark"] .studio47-filter-modal .filter-reset{
 </style>
 
 
-<style id="studio47-popup-edge-to-edge-fix">
-/* Final popup structure: header and footer span the entire card width; only content is inset. */
+
+<style id="studio47-popup-structure-final">
+/* FINAL POPUP STRUCTURE
+   No negative margins or calculated footer widths. The modal itself clips the card;
+   the header and footer are true full-width flex children, and only the body is padded. */
 .modal{
   padding:0!important;
   overflow:hidden!important;
   display:flex!important;
   flex-direction:column!important;
+  box-sizing:border-box!important;
 }
 .modal-head{
   position:relative!important;
   top:auto!important;
+  left:auto!important;
+  right:auto!important;
   flex:0 0 auto!important;
   width:100%!important;
+  max-width:none!important;
   margin:0!important;
   padding:14px 16px!important;
+  box-sizing:border-box!important;
   border-radius:0!important;
   border-bottom:1px solid #edcad8!important;
   background:linear-gradient(135deg,var(--popup-header-bg,#fdeaf2),var(--popup-header-bg-2,#f8dbe7))!important;
-  box-shadow:0 4px 16px rgba(88,3,48,.06)!important;
 }
+
+/* Forms take the full inner width. Do not pad the form itself; that was what caused
+   the sticky footer to end early on the right side in mobile Safari. */
 .modal > form{
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
   min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex-direction:column!important;
+  flex:1 1 auto!important;
+  overflow:hidden!important;
+}
+
+/* The form content is the scrollable/padded area. */
+.modal > form > .form-grid{
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:18px!important;
+  box-sizing:border-box!important;
+  flex:1 1 auto!important;
   overflow-y:auto!important;
   overflow-x:hidden!important;
   overscroll-behavior:contain!important;
   -webkit-overflow-scrolling:touch!important;
-  padding:18px 18px 0!important;
 }
-.modal > form > .modal-actions{
-  position:sticky!important;
-  bottom:0!important;
-  z-index:25!important;
-  width:calc(100% + 36px)!important;
-  margin:18px -18px 0!important;
-  padding:12px 18px calc(12px + env(safe-area-inset-bottom))!important;
-  border-top:1px solid var(--line)!important;
-  border-radius:0!important;
-  background:rgba(255,255,255,.98)!important;
-  box-shadow:0 -8px 20px rgba(88,3,48,.06)!important;
-}
-/* Detail/confirmation popups where actions are direct children of .modal. */
+
+/* True edge-to-edge footer. No negative margin, no calc() width, nothing to clip. */
+.modal-actions,
+.modal > form > .modal-actions,
 .modal > .modal-actions{
-  position:sticky!important;
-  bottom:0!important;
+  position:relative!important;
+  left:auto!important;
+  right:auto!important;
+  bottom:auto!important;
   flex:0 0 auto!important;
+  align-self:stretch!important;
   width:100%!important;
-  margin:18px 0 0!important;
+  max-width:none!important;
+  min-width:0!important;
+  margin:0!important;
   padding:12px 18px calc(12px + env(safe-area-inset-bottom))!important;
-  border-top:1px solid var(--line)!important;
+  box-sizing:border-box!important;
   border-radius:0!important;
+  border-top:1px solid var(--line)!important;
   background:rgba(255,255,255,.98)!important;
   box-shadow:0 -8px 20px rgba(88,3,48,.06)!important;
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:9px!important;
+  z-index:25!important;
 }
-/* Give direct modal content the same body padding when it is not wrapped in a form. */
+.modal-actions:has(> :only-child){grid-template-columns:1fr!important;}
+.modal-actions button{
+  width:100%!important;
+  min-width:0!important;
+  min-height:46px!important;
+}
+
+/* Non-form detail popups still get normal body inset spacing. */
 .modal > .stars,
 .modal > p,
 .modal > .review-detail-body,
@@ -2553,19 +2591,7 @@ html[data-theme="dark"] .studio47-filter-modal .filter-reset{
 .modal > .modal-head + p,
 .modal > .modal-head + .stars{margin-top:18px!important;}
 
-/* Keep all bottom action buttons aligned cleanly across the full footer. */
-.modal-actions{
-  display:grid!important;
-  grid-template-columns:repeat(2,minmax(0,1fr))!important;
-  gap:9px!important;
-}
-.modal-actions:has(> :only-child){grid-template-columns:1fr!important;}
-.modal-actions button{
-  width:100%!important;
-  min-width:0!important;
-  min-height:46px!important;
-}
-
+body.dark .modal-actions,
 body.dark .modal > form > .modal-actions,
 body.dark .modal > .modal-actions{
   background:rgba(33,22,29,.98)!important;
@@ -2573,20 +2599,20 @@ body.dark .modal > .modal-actions{
 }
 
 @media(max-width:760px){
-  .modal > form{padding:16px 16px 0!important;}
-  .modal > form > .modal-actions{
-    width:calc(100% + 32px)!important;
-    margin:16px -16px 0!important;
-    padding:11px 16px calc(12px + env(safe-area-inset-bottom))!important;
-  }
+  .modal > form > .form-grid{padding:16px!important;}
+  .modal-actions,
+  .modal > form > .modal-actions,
   .modal > .modal-actions{
-    margin-top:16px!important;
+    width:100%!important;
+    margin:0!important;
     padding:11px 16px calc(12px + env(safe-area-inset-bottom))!important;
   }
 }
 
 @media(max-width:420px){
-  .modal-actions{grid-template-columns:1fr 1fr!important;}
+  .modal-actions,
+  .modal > form > .modal-actions,
+  .modal > .modal-actions{grid-template-columns:1fr 1fr!important;}
   .modal-actions:has(> :only-child){grid-template-columns:1fr!important;}
 }
 </style>
@@ -2606,3 +2632,4 @@ body.dark .modal > .modal-actions{
   }
 }
 </style>
+
