@@ -1878,4 +1878,297 @@ html[data-theme="dark"] .studio47-filter-modal select{
 })();
 </script>
 
+
+<!-- STUDIO47_MOBILE_UX_FINAL_V1 -->
+<style id="studio47-mobile-ux-final">
+/* Unified mobile app + popup polish. Added as a final override so existing logic stays intact. */
+:root{
+  --mobile-safe-top:max(14px,env(safe-area-inset-top));
+  --mobile-safe-bottom:max(14px,env(safe-area-inset-bottom));
+  --popup-edge:14px;
+  --popup-radius:22px;
+}
+
+/* Keep every interactive control finger-friendly. */
+button,.icon-btn,.close,input,select,textarea{touch-action:manipulation}
+button,.icon-btn,.close{min-height:40px}
+
+/* Unified overlay behavior: the page behind a popup never becomes the scroll surface. */
+.modal-bg,.time-picker-backdrop,.studio47-filter-backdrop,.appointment-filter-backdrop{
+  overscroll-behavior:none!important;
+}
+.modal-bg{
+  position:fixed!important;
+  inset:0!important;
+  display:grid!important;
+  place-items:center!important;
+  padding:
+    calc(var(--mobile-safe-top) + var(--popup-edge))
+    var(--popup-edge)
+    calc(var(--mobile-safe-bottom) + var(--popup-edge))!important;
+  overflow:hidden!important;
+  background:rgba(40,5,25,.66)!important;
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+}
+
+/* Every normal popup shares one shape, one scroll model, one visual hierarchy. */
+.modal,
+.time-picker-sheet,
+.calendar-picker-sheet,
+.studio47-filter-modal,
+.appointment-actions-modal{
+  width:min(560px,100%)!important;
+  max-width:560px!important;
+  max-height:calc(100dvh - var(--mobile-safe-top) - var(--mobile-safe-bottom) - 28px)!important;
+  border:1px solid var(--line)!important;
+  border-radius:var(--popup-radius)!important;
+  background:#fff!important;
+  color:var(--ink)!important;
+  box-shadow:0 26px 80px rgba(40,5,25,.34)!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+  scrollbar-gutter:stable;
+}
+
+/* Strong, consistent popup header with clear color separation. */
+.modal-head{
+  position:sticky!important;
+  top:0!important;
+  z-index:20!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:12px!important;
+  margin:-22px -22px 18px!important;
+  padding:17px 18px!important;
+  min-height:66px!important;
+  background:linear-gradient(135deg,var(--wine),var(--wine2))!important;
+  color:#fff!important;
+  border-bottom:0!important;
+  box-shadow:0 6px 18px rgba(40,5,25,.15)!important;
+}
+.modal-head h2,.modal-head strong{margin:0!important;color:#fff!important;line-height:1.12!important}
+.modal-head .close{
+  width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;
+  border:1px solid rgba(255,255,255,.24)!important;
+  border-radius:50%!important;
+  background:rgba(255,255,255,.14)!important;
+  color:#fff!important;
+  display:grid!important;place-items:center!important;
+  font-size:1.15rem!important;
+}
+.modal-head .close:hover,.modal-head .close:focus-visible{background:rgba(255,255,255,.24)!important}
+
+/* Form body spacing + scroll-safe footer. */
+.modal{position:relative!important;padding:22px!important}
+.modal form{min-width:0!important}
+.modal-actions{
+  position:sticky!important;
+  bottom:0!important;
+  z-index:18!important;
+  margin:22px -22px -22px!important;
+  padding:14px 22px calc(16px + env(safe-area-inset-bottom))!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.94),#fff 24%)!important;
+  border-top:1px solid var(--line)!important;
+  box-shadow:0 -8px 22px rgba(40,5,25,.06)!important;
+}
+.modal-actions .primary,.modal-actions .ghost,.modal-actions .danger{min-height:46px!important}
+.modal-actions .primary{background:var(--pink)!important;color:#fff!important}
+.modal-actions .ghost{background:#fff!important;color:var(--wine)!important;border:1px solid var(--line)!important}
+.modal-actions .danger{background:#fff0f2!important;color:var(--red)!important;border:1px solid #f4cbd2!important}
+
+/* Inputs stay readable and never cause iOS input zoom. */
+.modal input,.modal select,.modal textarea,
+.studio47-filter-modal input,.studio47-filter-modal select,
+.translator-panel select{
+  font-size:16px!important;
+  min-height:46px;
+}
+.modal textarea{min-height:100px;resize:vertical}
+.modal img,.modal video{max-width:100%!important;height:auto}
+
+/* Custom/listbox dropdowns are scrollable INSIDE the popup. */
+.modal [role="listbox"],
+.modal .dropdown-menu,
+.modal .dropdown-options,
+.modal .select-options,
+.modal .custom-select-options,
+.studio47-filter-modal [role="listbox"],
+.translator-panel [role="listbox"]{
+  max-height:min(260px,40dvh)!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+  scrollbar-gutter:stable!important;
+}
+
+/* Make the time picker look like the same family instead of a detached sheet. */
+.time-picker-sheet{padding:0 18px 20px!important}
+.time-picker-top{
+  position:sticky!important;top:0!important;z-index:10!important;
+  margin:0 -18px 14px!important;padding:12px 14px!important;
+  min-height:62px!important;
+  display:grid!important;grid-template-columns:auto 1fr auto!important;align-items:center!important;gap:10px!important;
+  background:linear-gradient(135deg,var(--wine),var(--wine2))!important;color:#fff!important;
+}
+.time-picker-top strong{color:#fff!important;text-align:center!important;font:400 1.25rem Georgia,serif!important}
+.time-picker-top button{min-width:68px!important;min-height:40px!important;border-radius:10px!important;color:#fff!important;background:rgba(255,255,255,.14)!important;border:1px solid rgba(255,255,255,.18)!important}
+.time-wheel{max-height:252px!important;overflow-y:auto!important;overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important}
+
+/* Filter modal gets the same wine header and scroll-contained footer. */
+.studio47-filter-modal{padding:0 18px 18px!important;gap:12px!important}
+.studio47-filter-modal .appointment-filter-head{
+  position:sticky!important;top:0!important;z-index:10!important;
+  margin:0 -18px 4px!important;padding:13px 14px!important;min-height:62px!important;
+  background:linear-gradient(135deg,var(--wine),var(--wine2))!important;color:#fff!important;border:0!important;
+}
+.studio47-filter-modal .appointment-filter-head strong{color:#fff!important}
+.studio47-filter-modal .appointment-filter-close{background:rgba(255,255,255,.14)!important;color:#fff!important;border:1px solid rgba(255,255,255,.2)!important}
+.studio47-filter-modal .appointment-filter-actions{
+  position:sticky!important;bottom:0!important;z-index:9!important;
+  margin:6px -18px -18px!important;padding:13px 18px calc(15px + env(safe-area-inset-bottom))!important;
+  background:#fff!important;border-top:1px solid var(--line)!important;
+}
+
+/* Translator is also constrained to the screen and independently scrollable. */
+.translator-panel{
+  max-height:calc(100dvh - var(--mobile-safe-top) - var(--mobile-safe-bottom) - 86px)!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+  overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;
+}
+
+/* Toasts and sticky chrome stay clear of the iPhone home indicator. */
+.toast{bottom:calc(12px + env(safe-area-inset-bottom))!important}
+
+@media(max-width:760px){
+  html,body{min-height:100%;max-width:100%;overflow-x:hidden!important}
+  .app>main{padding-bottom:calc(30px + env(safe-area-inset-bottom))!important}
+  .topbar{
+    position:sticky!important;
+    top:max(4px,env(safe-area-inset-top))!important;
+    z-index:38!important;
+    border-radius:14px!important;
+    background:rgba(248,243,246,.94)!important;
+    backdrop-filter:blur(14px)!important;
+    -webkit-backdrop-filter:blur(14px)!important;
+  }
+  .mobile-menu-toggle,#translatorButton,#themeToggle,.icon-btn{min-width:44px!important;min-height:44px!important}
+
+  .modal-bg{
+    place-items:center!important;
+    align-items:center!important;
+    padding:
+      calc(var(--mobile-safe-top) + 10px)
+      10px
+      calc(var(--mobile-safe-bottom) + 10px)!important;
+  }
+  .modal,.time-picker-sheet,.calendar-picker-sheet,.studio47-filter-modal,.appointment-actions-modal{
+    width:100%!important;max-width:100%!important;
+    max-height:calc(100dvh - var(--mobile-safe-top) - var(--mobile-safe-bottom) - 20px)!important;
+    border-radius:20px!important;
+  }
+  .modal{padding:18px!important}
+  .modal-head{margin:-18px -18px 16px!important;padding:14px 15px!important;min-height:62px!important}
+  .modal-head h2{font-size:1.38rem!important}
+  .modal-actions{
+    margin:18px -18px -18px!important;
+    padding:12px 18px calc(14px + env(safe-area-inset-bottom))!important;
+    display:grid!important;grid-template-columns:1fr!important;gap:8px!important;
+  }
+  .modal-actions button{width:100%!important;min-height:48px!important}
+  .form-grid{grid-template-columns:1fr!important;gap:13px!important}
+  .field.full{grid-column:auto!important}
+  .day-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+
+  /* Mobile tables read like cards, not desktop grids squeezed into the viewport. */
+  .table-wrap{overflow:visible!important}
+  .table-wrap table,#reviewRows table{display:block!important;min-width:0!important;width:100%!important}
+  .table-wrap thead{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important}
+  .table-wrap tbody{display:grid!important;gap:11px!important;padding:10px 0!important}
+  .table-wrap tr{display:grid!important;width:100%!important;padding:10px 13px!important;border:1px solid var(--line)!important;border-radius:15px!important;background:#fff!important;box-shadow:0 7px 22px rgba(70,8,43,.07)!important}
+  .table-wrap td,#reviewRows td{display:grid!important;grid-template-columns:minmax(86px,32%) minmax(0,1fr)!important;gap:10px!important;align-items:start!important;width:100%!important;padding:9px 0!important;border:0!important;border-bottom:1px solid #f1e5eb!important;white-space:normal!important;overflow-wrap:anywhere!important}
+  .table-wrap td:last-child{border-bottom:0!important}
+  .row-actions,#reviewRows .row-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;width:100%!important}
+  .row-actions button,#reviewRows .row-actions button{min-height:44px!important;width:100%!important}
+
+  .queue-item{min-height:58px!important}
+  .appointment-item,.team-compact-card,.staff-service-card,.staff-review-card{border-radius:15px!important}
+  .gallery-v28-actions button,.compact-edit-actions button{min-width:44px!important;min-height:44px!important}
+
+  .translator-panel{
+    position:fixed!important;
+    top:calc(var(--mobile-safe-top) + 58px)!important;
+    right:10px!important;left:10px!important;
+    width:auto!important;
+    max-height:calc(100dvh - var(--mobile-safe-top) - var(--mobile-safe-bottom) - 78px)!important;
+    border-radius:16px!important;
+  }
+}
+
+@media(max-width:390px){
+  .day-grid{grid-template-columns:1fr 1fr!important}
+  .table-wrap td,#reviewRows td{grid-template-columns:80px minmax(0,1fr)!important}
+}
+
+/* Dark mode equivalents for final overrides. */
+html[data-theme="dark"] .modal,
+html[data-theme="dark"] .studio47-filter-modal,
+html[data-theme="dark"] .time-picker-sheet{background:#191216!important;color:#fff5fa!important;border-color:#55313f!important}
+html[data-theme="dark"] .modal-actions,
+html[data-theme="dark"] .studio47-filter-modal .appointment-filter-actions{background:#191216!important;border-color:#55313f!important}
+html[data-theme="dark"] .modal-actions .ghost{background:#21151b!important;color:#fff5fa!important;border-color:#603047!important}
+html[data-theme="dark"] .table-wrap tr{background:#191216!important}
+</style>
+<script id="studio47-mobile-ux-behavior">
+(() => {
+  let bodyScrollY=0;
+  const popupSelector='.modal-bg:not([hidden]), .time-picker-backdrop:not([hidden]), .studio47-filter-backdrop:not([hidden])';
+  const hasOpenPopup=()=>!!document.querySelector(popupSelector);
+  const lockBody=()=>{
+    if(document.body.dataset.popupLocked==='1') return;
+    bodyScrollY=window.scrollY||0;
+    document.body.dataset.popupLocked='1';
+    document.body.style.setProperty('--locked-scroll-y',`${bodyScrollY}px`);
+    document.body.style.overflow='hidden';
+    document.body.style.overscrollBehavior='none';
+  };
+  const unlockBody=()=>{
+    if(hasOpenPopup()) return;
+    if(document.body.dataset.popupLocked!=='1') return;
+    delete document.body.dataset.popupLocked;
+    document.body.style.overflow='';
+    document.body.style.overscrollBehavior='';
+  };
+  const keepFieldVisible=e=>{
+    const field=e.target;
+    if(!field.matches('input,select,textarea')) return;
+    const popup=field.closest('.modal,.time-picker-sheet,.calendar-picker-sheet,.studio47-filter-modal');
+    if(!popup) return;
+    setTimeout(()=>field.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'}),120);
+  };
+  document.addEventListener('focusin',keepFieldVisible,true);
+
+  const observer=new MutationObserver(()=>{
+    requestAnimationFrame(()=>{
+      if(hasOpenPopup()) lockBody(); else unlockBody();
+      document.querySelectorAll('.modal,.time-picker-sheet,.calendar-picker-sheet,.studio47-filter-modal').forEach(popup=>{
+        popup.setAttribute('tabindex','-1');
+        popup.style.webkitOverflowScrolling='touch';
+      });
+    });
+  });
+  observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','class','style']});
+
+  document.addEventListener('keydown',e=>{
+    if(e.key!=='Escape') return;
+    const top=[...document.querySelectorAll('.modal-bg:not([hidden])')].pop();
+    if(top){ const close=top.querySelector('.close,.cancel,[aria-label*="Close"]'); close?.click(); }
+  });
+})();
+</script>
+
 </body></html>
