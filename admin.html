@@ -285,23 +285,7 @@ function forgotPassword(){
   root.innerHTML=`<div class="login-wrap"><form class="login-card" id="forgot"><div class="login-brand"><div class="mark">47</div><div><h1>Recover access</h1><span class="eyebrow">Reset password</span></div></div><p>Enter your email and we will send you a link to create a new password.</p><div id="err"></div><div class="stack"><input name="email" type="email" required autocomplete="email" placeholder="Email"><button class="primary">Send reset link</button><button type="button" class="auth-link" id="backLogin">Back to sign in</button></div></form></div>`;
   document.querySelector('#backLogin').onclick=login;document.querySelector('#forgot').onsubmit=async e=>{e.preventDefault();const form=e.currentTarget,email=String(new FormData(form).get('email')||'').trim().toLowerCase(),err=document.querySelector('#err'),button=form.querySelector('.primary');if(!allowedAdminEmail(email))return err.innerHTML='<div class="error">Unable to send reset link.</div>';button.disabled=true;button.textContent='Sending…';const redirectTo=location.origin+location.pathname,{error}=await db.auth.resetPasswordForEmail(email,{redirectTo});button.disabled=false;button.textContent='Send reset link';err.innerHTML=error?'<div class="error">Unable to send reset link.</div>':'<div class="auth-success">If an account exists for that email, you will receive a link in a few minutes.</div>'};
 }
-const allowedAdminDomains=new Set(['studio47.com','steadyhandsop.com']);
-
-const allowedAdminEmails=new Set([
-  'marielenaespino78@gmail.com'
-]);
-
-const allowedAdminEmail=email=>{
-  const normalized=String(email||'').trim().toLowerCase();
-  const at=normalized.lastIndexOf('@');
-
-  return allowedAdminEmails.has(normalized) ||
-    (
-      at>0 &&
-      at===normalized.indexOf('@') &&
-      allowedAdminDomains.has(normalized.slice(at+1))
-    );
-};
+const allowedAdminEmail = () => true;
 /* Responsive navigation and whole-app language controls. */
 const responsiveStyles=document.createElement('style');responsiveStyles.textContent=`
 .mobile-menu-toggle,.mobile-nav-backdrop{display:none}.translator{position:relative}.translator-panel{position:absolute;right:0;top:calc(100% + 9px);z-index:75;width:230px;padding:12px;border:1px solid var(--line);border-radius:11px;background:#fff;box-shadow:0 18px 45px #2805192b}.translator-panel[hidden]{display:none}.translator-panel label{display:block;margin-bottom:6px;color:var(--muted);font-size:.66rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.translator-panel select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}#google_translate_element{position:fixed;left:-9999px;top:-9999px}.goog-te-banner-frame,.skiptranslate iframe{display:none!important}body{top:0!important}
@@ -1515,7 +1499,7 @@ const appBeforeNotifications=app;
   }
 
   const {data:profile}=await db
-    .from('studio47-staff-profiles')
+    .from('studio47-staff_profiles')
     .select('user_id,work_email,recovery_email,stylist_name,team_member_id,role,active')
     .eq('user_id',session.user.id)
     .maybeSingle();
