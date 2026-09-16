@@ -1391,11 +1391,104 @@ function showTeamSchedule(member){
   const close=()=>overlay.innerHTML='';overlay.querySelector('.close').onclick=overlay.querySelector('.cancel').onclick=close;overlay.querySelector('.modal-bg').onclick=event=>{if(event.target===event.currentTarget)close()};
 }
 function ownerTeamCompact(){
-  compactPageHeading('Team');const team=orderedTeam(),profiles=data.staffProfiles||[];
-  document.querySelector('#view').innerHTML=`<section class="compact-page"><div class="compact-page-head"><div><div class="eyebrow">Staff schedule</div><h1>Team</h1><p>${teamCompactEditMode?'Reorder, edit, or remove team members.':'Tap a team member to see their schedule.'}</p></div><div class="compact-head-actions"><button class="compact-icon-btn ${teamCompactEditMode?'active':''}" id="teamCompactEdit" type="button" aria-label="${teamCompactEditMode?'Finish editing team':'Edit team'}"><i class="fa-solid ${teamCompactEditMode?'fa-check':'fa-pen'}"></i></button><button class="compact-icon-btn" id="teamCompactAdd" type="button" aria-label="Add team member"><i class="fa-solid fa-plus"></i></button></div></div><div class="team-compact-list">${team.map((member,index)=>{const profile=profiles.find(item=>item.team_member_id===member.id),email=profile?.work_email||profile?.recovery_email||member.email||'No linked email';return `<article class="team-compact-card" data-team-open="${member.id}" tabindex="0" role="button"><div class="team-compact-identity"><strong>${esc(member.name||'Team member')}</strong><span>${esc(email)}</span></div>${teamCompactEditMode?`<div class="compact-edit-actions"><button class="ghost" type="button" data-team-move="${member.id}" data-direction="-1" aria-label="Move up" ${index===0?'disabled':''}><i class="fa-solid fa-arrow-up"></i></button><button class="ghost" type="button" data-team-move="${member.id}" data-direction="1" aria-label="Move down" ${index===team.length-1?'disabled':''}><i class="fa-solid fa-arrow-down"></i></button><button class="ghost" type="button" data-team-edit="${member.id}" aria-label="Edit"><i class="fa-solid fa-pen"></i></button><button class="danger" type="button" data-team-delete="${member.id}" aria-label="Delete"><i class="fa-solid fa-trash"></i></button></div>`:''}</article>`}).join('')||'<div class="empty">No team members yet.</div>'}</div></section>`;
-  document.querySelector('#teamCompactAdd').onclick=()=>teamEditor();document.querySelector('#teamCompactEdit').onclick=()=>{teamCompactEditMode=!teamCompactEditMode;ownerTeamCompact()};
-  document.querySelectorAll('[data-team-open]').forEach(card=>{const member=team.find(item=>item.id===card.dataset.teamOpen);card.onclick=()=>showTeamSchedule(member);card.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();showTeamSchedule(member)}}});
-  document.querySelectorAll('[data-team-move]').forEach(button=>button.onclick=event=>{event.stopPropagation();moveTeamMember(button.dataset.teamMove,Number(button.dataset.direction))});document.querySelectorAll('[data-team-edit]').forEach(button=>button.onclick=event=>{event.stopPropagation();teamEditor(team.find(item=>item.id===button.dataset.teamEdit))});document.querySelectorAll('[data-team-delete]').forEach(button=>button.onclick=event=>{event.stopPropagation();removeTeam(button.dataset.teamDelete)});
+  compactPageHeading('Team');
+
+  const team=orderedTeam();
+  const profiles=data.staffProfiles||[];
+
+  document.querySelector('#view').innerHTML=`
+    <section class="compact-page">
+      <div class="compact-page-head">
+        <div>
+          <div class="eyebrow">Staff schedule</div>
+          <h1>Team</h1>
+          <p>Tap a team member to see their schedule.</p>
+        </div>
+
+        <div class="compact-head-actions">
+          <button
+            class="compact-icon-btn"
+            id="teamCompactAdd"
+            type="button"
+            aria-label="Add team member"
+          >
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="team-compact-list">
+        ${
+          team.map((member,index)=>{
+            const profile=profiles.find(
+              item=>item.team_member_id===member.id
+            );
+
+            const email=
+              profile?.work_email ||
+              profile?.recovery_email ||
+              member.email ||
+              'No linked email';
+
+            return `
+              <article
+                class="team-compact-card"
+                data-team-open="${member.id}"
+                tabindex="0"
+                role="button"
+              >
+                <div class="team-compact-identity">
+                  <strong>${esc(member.name||'Team member')}</strong>
+                  <span>${esc(email)}</span>
+                </div>
+
+                <div class="compact-edit-actions">
+                  <button
+                    class="ghost"
+                    type="button"
+                    data-team-edit="${member.id}"
+                    aria-label="Edit ${esc(member.name||'team member')}"
+                  >
+                    <i class="fa-solid fa-pen"></i>
+                  </button>
+                </div>
+              </article>
+            `;
+          }).join('') ||
+          '<div class="empty">No team members yet.</div>'
+        }
+      </div>
+    </section>
+  `;
+
+  document.querySelector('#teamCompactAdd').onclick=()=>teamEditor();
+
+  document.querySelectorAll('[data-team-open]').forEach(card=>{
+    const member=team.find(
+      item=>item.id===card.dataset.teamOpen
+    );
+
+    card.onclick=()=>showTeamSchedule(member);
+
+    card.onkeydown=event=>{
+      if(event.key==='Enter'||event.key===' '){
+        event.preventDefault();
+        showTeamSchedule(member);
+      }
+    };
+  });
+
+  document.querySelectorAll('[data-team-edit]').forEach(button=>{
+    button.onclick=event=>{
+      event.stopPropagation();
+
+      const member=team.find(
+        item=>item.id===button.dataset.teamEdit
+      );
+
+      teamEditor(member);
+    };
+  });
 }
 function ownerGalleryCompact(){
   compactPageHeading('Gallery');const items=galleryInOrder();let imageIndex=0;
