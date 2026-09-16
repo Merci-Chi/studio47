@@ -1233,7 +1233,7 @@ forgotPassword=function(){
 languageControl=function(){const selected=localStorage.getItem('studio47_language')||'en';return `<div class="translator notranslate"><button class="icon-btn" id="translatorButton" type="button" aria-label="Translate site" aria-expanded="false"><i class="fa-solid fa-language"></i></button><div class="translator-panel" id="translatorPanel" hidden><div class="translator-panel-head"><label for="siteLanguage">Translate site</label><button class="translator-close" id="translatorClose" type="button" aria-label="Close translation menu"><i class="fa-solid fa-xmark"></i></button></div><select id="siteLanguage">${languageChoices.map(([code,name])=>`<option value="${code}" ${selected===code?'selected':''}>${name}</option>`).join('')}</select></div></div>`};
 
 app=async function(){
-  if(!staffProfile&&session?.user?.id){const {data:profile}=await db.from('studio47-staff_profiles').select('user_id,work_email,recovery_email,stylist_name,team_member_id,role,active').eq('user_id',session.user.id).maybeSingle();staffProfile=profile||null}
+  if(!staffProfile&&session?.user?.id){const {data:profile}=await db.from('studio47-staff_profiles').select('user_id,work_email,recovery_email,phone_number,stylist_name,team_member_id,role,active').eq('user_id',session.user.id).maybeSingle();staffProfile=profile||null}
   const owner=isOwner();pageName='appointments';
   if(location.protocol!=='file:')history.replaceState(null,'',`${location.pathname}${location.search}#${pageName}`);
   const workspace=owner?`<button data-page="appointments"><span class="ico"><i class="fa-regular fa-calendar-check"></i></span>Appointments</button><button data-page="services"><span class="ico"><i class="fa-solid fa-scissors"></i></span>Menu &amp; Pricing</button><button data-page="content"><span class="ico"><i class="fa-regular fa-images"></i></span>Gallery</button><button data-page="reviews"><span class="ico"><i class="fa-solid fa-star"></i></span>Reviews<span class="badge" id="badge">0</span></button><button data-page="team"><span class="ico"><i class="fa-solid fa-user-group"></i></span>Team</button>`:`<button data-page="appointments"><span class="ico"><i class="fa-regular fa-calendar-check"></i></span>Appointments</button><button data-page="services"><span class="ico"><i class="fa-solid fa-scissors"></i></span>Menu &amp; Pricing</button><button data-page="reviews"><span class="ico"><i class="fa-solid fa-star"></i></span>Reviews</button>`;
@@ -1247,7 +1247,7 @@ app=async function(){
 
 load=async function(note=false){
   const requestId=++accessLoadSequence;
-  const profileResult=await db.from('studio47-staff_profiles').select('user_id,work_email,recovery_email,stylist_name,team_member_id,role,active').eq('user_id',session.user.id).maybeSingle();
+  const profileResult=await db.from('studio47-staff_profiles').select('user_id,work_email,recovery_email,phone_number,stylist_name,team_member_id,role,active').eq('user_id',session.user.id).maybeSingle();
   if(requestId!==accessLoadSequence)return;
   if(profileResult.error||!profileResult.data?.active){document.querySelector('#view').innerHTML='<div class="page-head"><div><div class="eyebrow">Access</div><h1>Account not linked</h1><p>Ask Maria Elena to link this login to an active team member.</p></div></div>';return}
   staffProfile=profileResult.data;
@@ -1260,7 +1260,7 @@ load=async function(note=false){
     return {data:{reviews:savedReviews.data||[],place:null,fetched_at:null},error:null};
   })();
   const queries=[db.from('site_content').select('*').order('sort_order'),db.from('services').select('*').order('sort_order'),reviewRequest,db.from('appointments').select('*').order('appointment_date').order('appointment_time')];
-  if(isOwner())queries.push(db.from('studio47-staff_profiles').select('user_id,work_email,recovery_email,stylist_name,team_member_id,role,active').order('stylist_name'));
+  if(isOwner())queries.push(db.from('studio47-staff_profiles').select('user_id,work_email,recovery_email,phone_number,stylist_name,team_member_id,role,active').order('stylist_name'));
   const results=await Promise.all(queries),error=results.find(result=>result.error)?.error;if(error){document.querySelector('#view').innerHTML=`<div class="page-head"><div><div class="eyebrow">Access</div><h1>Unable to load data</h1><p>${esc(error.message)}</p></div></div>`;return}
   if(requestId!==accessLoadSequence)return;
   const team=results[0].data.filter(item=>item.section==='team').map(item=>{try{return {...JSON.parse(item.content_value||'{}'),id:item.id,content_key:item.content_key,sort_order:item.sort_order}}catch{return null}}).filter(Boolean);
@@ -1398,7 +1398,7 @@ function sendTeamLoginPopup(member){
     return;
   }
 
-  overlay.innerHTML=`<div class="modal-bg"><div class="modal"><div class="modal-head"><h2>Send first login</h2><button class="close" type="button">×</button></div><form id="teamLoginSend"><div class="form-grid"><div class="field full"><label>Team member</label><input value="${esc(member.name||'Team member')}" readonly></div><div class="field full"><label>Login</label><input value="${esc(profile.work_email)}" readonly></div><div class="field full"><label>Phone number</label><input name="phone" type="tel" required inputmode="tel" autocomplete="tel" placeholder="(702) 555-1234"></div><div class="field full"><label>Phone type</label><div class="invite-choice-grid"><label class="invite-choice"><input type="radio" name="device" value="iphone" required><span><i class="fa-brands fa-apple"></i><strong>iPhone</strong></span></label><label class="invite-choice"><input type="radio" name="device" value="android" required><span><i class="fa-brands fa-android"></i><strong>Samsung / Android</strong></span></label></div></div><div class="field full"><label>Language</label><div class="invite-choice-grid"><label class="invite-choice"><input type="radio" name="language" value="english" required><span><i class="fa-solid fa-language"></i><strong>English</strong></span></label><label class="invite-choice"><input type="radio" name="language" value="spanish" required><span><i class="fa-solid fa-language"></i><strong>Español</strong></span></label></div></div><div class="field full"><small>The message will include studio47hairsalon.com/admin, ${esc(profile.work_email)}, the temporary password “password”, and the matching setup image.</small></div></div><div class="modal-actions"><button type="button" class="ghost cancel">Cancel</button><button class="primary" type="submit"><i class="fa-solid fa-paper-plane"></i> Send login</button></div></form></div></div>`;
+  overlay.innerHTML=`<div class="modal-bg"><div class="modal"><div class="modal-head"><h2>Send first login</h2><button class="close" type="button">×</button></div><form id="teamLoginSend"><div class="form-grid"><div class="field full"><label>Team member</label><input value="${esc(member.name||'Team member')}" readonly></div><div class="field full"><label>Login</label><input value="${esc(profile.work_email)}" readonly></div><div class="field full"><label>Phone number</label><input name="phone" type="tel" required inputmode="tel" autocomplete="tel" placeholder="(702) 555-1234" value="${esc(profile.phone_number||'')}"></div><div class="field full"><label>Phone type</label><div class="invite-choice-grid"><label class="invite-choice"><input type="radio" name="device" value="iphone" required><span><i class="fa-brands fa-apple"></i><strong>iPhone</strong></span></label><label class="invite-choice"><input type="radio" name="device" value="android" required><span><i class="fa-brands fa-android"></i><strong>Samsung / Android</strong></span></label></div></div><div class="field full"><label>Language</label><div class="invite-choice-grid"><label class="invite-choice"><input type="radio" name="language" value="english" required><span><i class="fa-solid fa-language"></i><strong>English</strong></span></label><label class="invite-choice"><input type="radio" name="language" value="spanish" required><span><i class="fa-solid fa-language"></i><strong>Español</strong></span></label></div></div><div class="field full"><small>The message will include studio47hairsalon.com/admin, ${esc(profile.work_email)}, the temporary password “password”, and the matching setup image.</small></div></div><div class="modal-actions"><button type="button" class="ghost cancel">Cancel</button><button class="primary" type="submit"><i class="fa-solid fa-paper-plane"></i> Send login</button></div></form></div></div>`;
 
   const close=()=>overlay.innerHTML='';
   overlay.querySelector('.close').onclick=close;
@@ -1412,6 +1412,21 @@ function sendTeamLoginPopup(member){
     if(!phone||!device||!language)return alert('Enter the phone number, phone type, and language.');
 
     button.disabled=true;
+    button.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+
+    const {error:phoneSaveError}=await db
+      .from('studio47-staff_profiles')
+      .update({phone_number:phone})
+      .eq('team_member_id',member.id);
+
+    if(phoneSaveError){
+      button.disabled=false;
+      button.innerHTML='<i class="fa-solid fa-paper-plane"></i> Send login';
+      return alert(`The phone number could not be saved: ${phoneSaveError.message}`);
+    }
+
+    profile.phone_number=phone;
+
     button.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Sending…';
 
     const {data:result,error}=await db.functions.invoke('send-team-invite',{body:{team_member_id:member.id,phone,device,language}});
@@ -1612,7 +1627,7 @@ const appBeforeNotifications=app;
 
   const {data:profile}=await db
     .from('studio47-staff_profiles')
-    .select('user_id,work_email,recovery_email,stylist_name,team_member_id,role,active')
+    .select('user_id,work_email,recovery_email,phone_number,stylist_name,team_member_id,role,active')
     .eq('user_id',session.user.id)
     .maybeSingle();
 
