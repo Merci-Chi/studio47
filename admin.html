@@ -1390,106 +1390,39 @@ function showTeamSchedule(member){
   overlay.innerHTML=`<div class="modal-bg"><div class="modal"><div class="modal-head"><h2>${esc(member.name||'Team member')}</h2><button class="close" type="button">×</button></div><p><strong>Email</strong><br>${esc(email)}</p><p><strong>Working days</strong><br>${esc(days)}</p><p><strong>Hours</strong><br>${esc(member.start_time||'—')} – ${esc(member.end_time||'—')}</p><div class="modal-actions"><button class="primary cancel" type="button">Done</button></div></div></div>`;
   const close=()=>overlay.innerHTML='';overlay.querySelector('.close').onclick=overlay.querySelector('.cancel').onclick=close;overlay.querySelector('.modal-bg').onclick=event=>{if(event.target===event.currentTarget)close()};
 }
-function ownerTeamCompact(){
-  compactPageHeading('Team');
+return `
+  <article
+    class="team-compact-card"
+    data-team-open="${member.id}"
+    tabindex="0"
+    role="button"
+  >
+    <div class="team-compact-identity">
+      <strong>${esc(member.name||'Team member')}</strong>
+      <span>${esc(email)}</span>
+    </div>
 
-  const team=orderedTeam();
-  const profiles=data.staffProfiles||[];
+    <div class="compact-edit-actions">
+      <button
+        class="ghost"
+        type="button"
+        data-team-edit="${member.id}"
+        aria-label="Edit ${esc(member.name||'team member')}"
+      >
+        <i class="fa-solid fa-pen"></i>
+      </button>
 
-  document.querySelector('#view').innerHTML=`
-    <section class="compact-page">
-      <div class="compact-page-head">
-        <div>
-          <div class="eyebrow">Staff schedule</div>
-          <h1>Team</h1>
-          <p>Tap a team member to see their schedule.</p>
-        </div>
-
-        <div class="compact-head-actions">
-          <button
-            class="compact-icon-btn"
-            id="teamCompactAdd"
-            type="button"
-            aria-label="Add team member"
-          >
-            <i class="fa-solid fa-plus"></i>
-          </button>
-        </div>
-      </div>
-
-      <div class="team-compact-list">
-        ${
-          team.map((member,index)=>{
-            const profile=profiles.find(
-              item=>item.team_member_id===member.id
-            );
-
-            const email=
-              profile?.work_email ||
-              profile?.recovery_email ||
-              member.email ||
-              'No linked email';
-
-            return `
-              <article
-                class="team-compact-card"
-                data-team-open="${member.id}"
-                tabindex="0"
-                role="button"
-              >
-                <div class="team-compact-identity">
-                  <strong>${esc(member.name||'Team member')}</strong>
-                  <span>${esc(email)}</span>
-                </div>
-
-                <div class="compact-edit-actions">
-                  <button
-                    class="ghost"
-                    type="button"
-                    data-team-edit="${member.id}"
-                    aria-label="Edit ${esc(member.name||'team member')}"
-                  >
-                    <i class="fa-solid fa-pen"></i>
-                  </button>
-                </div>
-              </article>
-            `;
-          }).join('') ||
-          '<div class="empty">No team members yet.</div>'
-        }
-      </div>
-    </section>
-  `;
-
-  document.querySelector('#teamCompactAdd').onclick=()=>teamEditor();
-
-  document.querySelectorAll('[data-team-open]').forEach(card=>{
-    const member=team.find(
-      item=>item.id===card.dataset.teamOpen
-    );
-
-    card.onclick=()=>showTeamSchedule(member);
-
-    card.onkeydown=event=>{
-      if(event.key==='Enter'||event.key===' '){
-        event.preventDefault();
-        showTeamSchedule(member);
-      }
-    };
-  });
-
-  document.querySelectorAll('[data-team-edit]').forEach(button=>{
-    button.onclick=event=>{
-      event.stopPropagation();
-
-      const member=team.find(
-        item=>item.id===button.dataset.teamEdit
-      );
-
-      teamEditor(member);
-    };
-  });
-}
+      <button
+        class="danger"
+        type="button"
+        data-team-delete="${member.id}"
+        aria-label="Delete ${esc(member.name||'team member')}"
+      >
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    </div>
+  </article>
+`;
 function ownerGalleryCompact(){
   compactPageHeading('Gallery');const items=galleryInOrder();let imageIndex=0;
   document.querySelector('#view').innerHTML=`<section class="compact-page"><div class="compact-page-head"><div><div class="eyebrow">Website media</div><h1>Gallery</h1><p>${galleryCompactEditMode?'Reorder, edit, publish, or delete media.':'Tap an image to expand it.'}</p></div><div class="compact-head-actions"><button class="compact-icon-btn ${galleryCompactEditMode?'active':''}" id="galleryCompactEdit" type="button" aria-label="${galleryCompactEditMode?'Finish editing gallery':'Edit gallery'}"><i class="fa-solid ${galleryCompactEditMode?'fa-check':'fa-pen'}"></i></button><button class="compact-icon-btn" id="galleryCompactAdd" type="button" aria-label="Add gallery media"><i class="fa-solid fa-plus"></i></button><input id="galleryCompactFiles" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime,video/x-m4v" multiple hidden></div></div><small id="dropStatus"></small><div class="gallery-v28-grid">${items.map((item,index)=>{const video=isVideoMedia(item.image_url)||String(item.image_url||'').startsWith('data:video/'),expandIndex=video?-1:imageIndex++;return `<article class="gallery-v28-card">${video?`<video class="gallery-v28-media" src="${esc(item.image_url)}" controls playsinline preload="metadata"></video>`:`<img class="gallery-v28-media" src="${esc(item.image_url)}" alt="Gallery image ${expandIndex+1}" data-gallery-expand="${expandIndex}" tabindex="0">`}<div class="gallery-v28-meta"><span>#${index+1}</span><span>${video?'Video':'Image'}</span></div>${galleryCompactEditMode?`<div class="gallery-v28-actions"><button class="toggle ${item.is_live?'live':'draft'}" type="button" data-gallery-live="${item.id}" data-live="${item.is_live}">${item.is_live?'Live':'Not live'}</button><button class="ghost" type="button" data-gallery-move="${item.id}" data-direction="-1" aria-label="Move up" ${index===0?'disabled':''}><i class="fa-solid fa-arrow-up"></i></button><button class="ghost" type="button" data-gallery-move="${item.id}" data-direction="1" aria-label="Move down" ${index===items.length-1?'disabled':''}><i class="fa-solid fa-arrow-down"></i></button><button class="ghost" type="button" data-gallery-edit="${item.id}" aria-label="Edit"><i class="fa-solid fa-pen"></i></button><button class="danger" type="button" data-gallery-delete="${item.id}" aria-label="Delete"><i class="fa-solid fa-trash"></i></button></div>`:''}</article>`}).join('')||'<div class="empty">No gallery media yet.</div>'}</div></section>`;
