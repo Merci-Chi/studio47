@@ -2222,3 +2222,18 @@ window.addEventListener('pageshow',()=>{
 </script>
 
 </body></html>
+<style id="studio47-sidebar-over-header-fix">
+/* Keep the mobile drawer and its dimmed backdrop above the fixed header. */
+@media(max-width:760px){
+  .app.drawer-open .sidebar{
+    z-index:220!important;
+  }
+  .app.drawer-open .mobile-nav-backdrop{
+    z-index:210!important;
+  }
+  .app.drawer-open .topbar,
+  .app.drawer-open .translator-panel{
+    z-index:140!important;
+  }
+}
+</style>
