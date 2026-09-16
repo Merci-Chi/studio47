@@ -2221,6 +2221,271 @@ window.addEventListener('pageshow',()=>{
 });
 </script>
 
+
+<style id="studio47-popup-layer-and-style-final">
+/* FINAL POPUP LAYERING + MOCKUP-MATCHED MOBILE MODALS */
+:root{
+  --popup-header-bg:#f9dfe9;
+  --popup-header-bg-2:#fce9f0;
+  --popup-header-text:#4f1533;
+  --popup-card:#ffffff;
+  --popup-footer:#fffafd;
+}
+
+/* The fixed app header must ALWAYS sit behind any open popup. */
+.modal-bg,
+.time-picker-backdrop,
+.studio47-filter-backdrop,
+.appointment-filter-backdrop{
+  z-index:1000!important;
+  background:rgba(38,12,26,.58)!important;
+  backdrop-filter:blur(5px)!important;
+  -webkit-backdrop-filter:blur(5px)!important;
+}
+.modal-bg .modal{z-index:1001!important;}
+.time-picker-sheet,.calendar-picker-sheet{z-index:1002!important;}
+.studio47-filter-modal,.appointment-actions-modal{z-index:1003!important;}
+
+/* Never allow fixed app chrome to rise above a modal overlay. */
+body:has(.modal-bg) .topbar,
+body:has(.time-picker-backdrop) .topbar,
+body:has(.studio47-filter-backdrop) .topbar,
+body:has(.appointment-filter-backdrop) .topbar,
+body:has(.modal-bg) .translator-panel,
+body:has(.time-picker-backdrop) .translator-panel,
+body:has(.studio47-filter-backdrop) .translator-panel,
+body:has(.appointment-filter-backdrop) .translator-panel{
+  z-index:120!important;
+}
+
+/* One unified visual system for every popup. */
+.modal,
+.time-picker-sheet,
+.calendar-picker-sheet,
+.studio47-filter-modal,
+.appointment-actions-modal{
+  border:1px solid #efd4df!important;
+  border-radius:22px!important;
+  background:var(--popup-card)!important;
+  box-shadow:0 28px 80px rgba(48,12,31,.36)!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+
+.modal{padding:20px!important;}
+.modal-head{
+  position:sticky!important;
+  top:-20px!important;
+  z-index:30!important;
+  margin:-20px -20px 18px!important;
+  padding:14px 15px!important;
+  min-height:64px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:12px!important;
+  background:linear-gradient(135deg,var(--popup-header-bg),var(--popup-header-bg-2))!important;
+  color:var(--popup-header-text)!important;
+  border-bottom:1px solid #edcad8!important;
+  box-shadow:0 4px 16px rgba(88,3,48,.06)!important;
+}
+.modal-head h2{
+  margin:0!important;
+  color:var(--popup-header-text)!important;
+  font:600 1.35rem/1.15 Georgia,serif!important;
+}
+.modal-head .close,
+.studio47-filter-modal .appointment-filter-close{
+  width:40px!important;
+  height:40px!important;
+  min-width:40px!important;
+  min-height:40px!important;
+  border:0!important;
+  border-radius:12px!important;
+  display:grid!important;
+  place-items:center!important;
+  background:rgba(255,255,255,.72)!important;
+  color:var(--wine)!important;
+  box-shadow:inset 0 0 0 1px rgba(88,3,48,.09)!important;
+}
+
+.modal .field{gap:7px!important;}
+.modal .field label{
+  color:#5d4350!important;
+  font-size:.72rem!important;
+  font-weight:900!important;
+}
+.modal input,.modal select,.modal textarea,
+.studio47-filter-modal input,.studio47-filter-modal select{
+  min-height:46px!important;
+  width:100%!important;
+  border:1px solid #e7dbe1!important;
+  border-radius:11px!important;
+  background:#fff!important;
+  color:var(--ink)!important;
+  box-shadow:0 1px 0 rgba(40,5,25,.02)!important;
+}
+.modal textarea{min-height:96px!important;resize:vertical!important;}
+.modal input:focus,.modal select:focus,.modal textarea:focus,
+.studio47-filter-modal input:focus,.studio47-filter-modal select:focus{
+  outline:3px solid rgba(207,13,118,.13)!important;
+  border-color:#d96ca8!important;
+}
+
+.modal-actions,
+.studio47-filter-modal .appointment-filter-actions{
+  position:sticky!important;
+  bottom:-20px!important;
+  z-index:30!important;
+  margin:20px -20px -20px!important;
+  padding:13px 20px calc(15px + env(safe-area-inset-bottom))!important;
+  background:var(--popup-footer)!important;
+  border-top:1px solid #eedde5!important;
+  box-shadow:0 -8px 18px rgba(64,10,38,.05)!important;
+}
+.modal-actions .primary,
+.studio47-filter-modal .appointment-filter-done{
+  min-height:48px!important;
+  border-radius:11px!important;
+  background:linear-gradient(135deg,#d31678,#bd0b68)!important;
+  color:#fff!important;
+  box-shadow:0 8px 20px rgba(207,13,118,.18)!important;
+}
+.modal-actions .ghost,
+.studio47-filter-modal .filter-reset{
+  min-height:48px!important;
+  border-radius:11px!important;
+  background:#f5f3f4!important;
+  color:#3e3138!important;
+  border:1px solid #ebe3e7!important;
+}
+.modal-actions .danger{
+  min-height:48px!important;
+  border-radius:11px!important;
+  background:#fff0f2!important;
+  color:#c82443!important;
+  border:1px solid #ffd4dc!important;
+}
+
+/* Filters use the same blush header treatment as normal dialogs. */
+.studio47-filter-modal{padding:0 18px 18px!important;}
+.studio47-filter-modal .appointment-filter-head{
+  position:sticky!important;
+  top:0!important;
+  z-index:30!important;
+  margin:0 -18px 6px!important;
+  padding:14px 15px!important;
+  min-height:64px!important;
+  background:linear-gradient(135deg,var(--popup-header-bg),var(--popup-header-bg-2))!important;
+  color:var(--popup-header-text)!important;
+  border-bottom:1px solid #edcad8!important;
+}
+.studio47-filter-modal .appointment-filter-head strong{color:var(--popup-header-text)!important;}
+.studio47-filter-modal .appointment-filter-actions{
+  bottom:-18px!important;
+  margin:8px -18px -18px!important;
+  padding-left:18px!important;
+  padding-right:18px!important;
+}
+
+/* Time/calendar popup surfaces follow the same card look. */
+.time-picker-sheet,.calendar-picker-sheet{
+  background:#fff!important;
+  color:var(--ink)!important;
+}
+
+/* Dark mode equivalents. */
+html[data-theme="dark"]{
+  --popup-header-bg:#4a1831;
+  --popup-header-bg-2:#351321;
+  --popup-header-text:#ffeaf4;
+  --popup-card:#191216;
+  --popup-footer:#1d1419;
+}
+html[data-theme="dark"] .modal,
+html[data-theme="dark"] .time-picker-sheet,
+html[data-theme="dark"] .calendar-picker-sheet,
+html[data-theme="dark"] .studio47-filter-modal,
+html[data-theme="dark"] .appointment-actions-modal{
+  background:var(--popup-card)!important;
+  color:#fff5fa!important;
+  border-color:#573346!important;
+}
+html[data-theme="dark"] .modal input,
+html[data-theme="dark"] .modal select,
+html[data-theme="dark"] .modal textarea,
+html[data-theme="dark"] .studio47-filter-modal input,
+html[data-theme="dark"] .studio47-filter-modal select{
+  background:#241820!important;
+  color:#fff5fa!important;
+  border-color:#5b3a4a!important;
+}
+html[data-theme="dark"] .modal .field label{color:#d9c0cc!important;}
+html[data-theme="dark"] .modal-actions .ghost,
+html[data-theme="dark"] .studio47-filter-modal .filter-reset{
+  background:#2a1d24!important;
+  color:#fff5fa!important;
+  border-color:#573746!important;
+}
+
+@media(max-width:760px){
+  .modal-bg,
+  .time-picker-backdrop,
+  .studio47-filter-backdrop,
+  .appointment-filter-backdrop{
+    padding:
+      calc(max(14px,env(safe-area-inset-top)) + 12px)
+      10px
+      calc(max(14px,env(safe-area-inset-bottom)) + 12px)!important;
+  }
+  .modal,
+  .time-picker-sheet,
+  .calendar-picker-sheet,
+  .studio47-filter-modal,
+  .appointment-actions-modal{
+    width:100%!important;
+    max-width:560px!important;
+    max-height:calc(100dvh - max(14px,env(safe-area-inset-top)) - max(14px,env(safe-area-inset-bottom)) - 24px)!important;
+    border-radius:20px!important;
+  }
+  .modal{padding:17px!important;}
+  .modal-head{
+    top:-17px!important;
+    margin:-17px -17px 15px!important;
+    padding:13px 14px!important;
+  }
+  .modal-actions{
+    bottom:-17px!important;
+    margin:18px -17px -17px!important;
+    padding:12px 17px calc(14px + env(safe-area-inset-bottom))!important;
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:8px!important;
+  }
+  .modal-actions:has(> :only-child){grid-template-columns:1fr!important;}
+  .modal-actions button{width:100%!important;min-height:48px!important;}
+
+  /* Keep custom dropdown/list content inside the popup and fully scrollable. */
+  .modal [role="listbox"],
+  .modal .dropdown-menu,
+  .modal .select-menu,
+  .modal .options,
+  .modal .picker-options{
+    max-height:min(240px,38dvh)!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    overscroll-behavior:contain!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+}
+
+@media(max-width:420px){
+  .modal-actions{grid-template-columns:1fr!important;}
+}
+</style>
+
 </body></html>
 <style id="studio47-sidebar-over-header-fix">
 /* Keep the mobile drawer and its dimmed backdrop above the fixed header. */
