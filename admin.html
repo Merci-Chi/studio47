@@ -1336,6 +1336,7 @@ html[data-theme="dark"] .table-wrap td::before{color:#d2a8ba}
 .compact-page{padding:28px 0}.compact-page-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:18px}.compact-page-head h1{margin:6px 0 3px;font:400 clamp(2.35rem,5vw,3.5rem)/1 Georgia,serif}.compact-page-head p{margin:0;color:var(--muted)}.compact-head-actions{display:flex;gap:8px}.compact-icon-btn{width:46px;height:46px;border:1px solid var(--line);border-radius:13px;display:grid;place-items:center;background:#fff;color:var(--wine);font-size:1rem}.compact-icon-btn.active{background:var(--pink);border-color:var(--pink);color:#fff}
 .staff-compact-list,.team-compact-list{display:grid;gap:9px}.staff-service-card,.staff-review-card,.team-compact-card{padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:var(--shadow)}.staff-service-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 14px;align-items:center}.staff-service-card strong,.team-compact-card strong{font-size:1rem}.staff-service-card .price{font:700 1.05rem Georgia,serif}.staff-service-card p{grid-column:1/-1;margin:3px 0 0;color:var(--muted);font-size:.78rem}.staff-review-card .stars{float:right}.staff-review-card p{margin:7px 0 3px;color:var(--muted)}.staff-review-card small{color:var(--muted)}
 .team-compact-card{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;text-align:left;color:var(--ink);cursor:pointer}.team-compact-identity{min-width:0}.team-compact-identity strong,.team-compact-identity span{display:block;overflow-wrap:anywhere}.team-compact-identity span{margin-top:3px;color:var(--muted);font-size:.75rem}.compact-edit-actions{display:flex;gap:6px}.compact-edit-actions button{width:38px;height:38px;padding:0;display:grid;place-items:center}
+.team-invite-button{color:var(--pink)!important}.team-invite-button:disabled{opacity:.38;cursor:not-allowed}.invite-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.invite-choice{position:relative;cursor:pointer}.invite-choice input{position:absolute;opacity:0;pointer-events:none}.invite-choice span{min-height:70px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--blush);display:flex;align-items:center;justify-content:center;gap:9px;color:var(--wine);text-align:center}.invite-choice i{font-size:1.25rem;color:var(--pink)}.invite-choice input:checked+span{border-color:var(--pink);box-shadow:0 0 0 3px #cf0d761b;background:#fff5fa}.invite-choice input:focus-visible+span{outline:3px solid #efabc977;outline-offset:2px}html[data-theme="dark"] .invite-choice span{background:#21151b;color:#fff5fa;border-color:#55313f}html[data-theme="dark"] .invite-choice input:checked+span{background:#321824;border-color:var(--pink)}@media(max-width:520px){.invite-choice-grid{grid-template-columns:1fr}}
 .gallery-v28-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}.gallery-v28-card{position:relative;min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:var(--shadow)}.gallery-v28-media{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;background:#160b11}.gallery-v28-card img{cursor:zoom-in}.gallery-v28-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;color:var(--muted);font-size:.7rem}.gallery-v28-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:0 10px 10px}.gallery-v28-actions button{min-width:0;height:38px;padding:0;display:grid;place-items:center}.gallery-v28-actions .toggle{grid-column:1/-1;width:100%}
 html[data-theme="dark"] .compact-icon-btn,html[data-theme="dark"] .staff-service-card,html[data-theme="dark"] .staff-review-card,html[data-theme="dark"] .team-compact-card,html[data-theme="dark"] .gallery-v28-card{background:#191216;color:#fff5fa;border-color:#55313f}html[data-theme="dark"] .compact-icon-btn{color:#fff5fa}html[data-theme="dark"] .compact-icon-btn.active{background:var(--pink);border-color:var(--pink)}
 /* Popups may scroll vertically, but never horizontally. */
@@ -1390,123 +1391,124 @@ function showTeamSchedule(member){
   overlay.innerHTML=`<div class="modal-bg"><div class="modal"><div class="modal-head"><h2>${esc(member.name||'Team member')}</h2><button class="close" type="button">×</button></div><p><strong>Email</strong><br>${esc(email)}</p><p><strong>Working days</strong><br>${esc(days)}</p><p><strong>Hours</strong><br>${esc(member.start_time||'—')} – ${esc(member.end_time||'—')}</p><div class="modal-actions"><button class="primary cancel" type="button">Done</button></div></div></div>`;
   const close=()=>overlay.innerHTML='';overlay.querySelector('.close').onclick=overlay.querySelector('.cancel').onclick=close;overlay.querySelector('.modal-bg').onclick=event=>{if(event.target===event.currentTarget)close()};
 }
+function sendTeamLoginPopup(member){
+  const profile=(data.staffProfiles||[]).find(item=>item.team_member_id===member.id);
+  if(!profile?.work_email){
+    alert('This team member does not have a linked login yet.');
+    return;
+  }
+
+  overlay.innerHTML=`<div class="modal-bg"><div class="modal"><div class="modal-head"><h2>Send first login</h2><button class="close" type="button">×</button></div><form id="teamLoginSend"><div class="form-grid"><div class="field full"><label>Team member</label><input value="${esc(member.name||'Team member')}" readonly></div><div class="field full"><label>Login</label><input value="${esc(profile.work_email)}" readonly></div><div class="field full"><label>Phone number</label><input name="phone" type="tel" required inputmode="tel" autocomplete="tel" placeholder="(702) 555-1234"></div><div class="field full"><label>Phone type</label><div class="invite-choice-grid"><label class="invite-choice"><input type="radio" name="device" value="iphone" required><span><i class="fa-brands fa-apple"></i><strong>iPhone</strong></span></label><label class="invite-choice"><input type="radio" name="device" value="android" required><span><i class="fa-brands fa-android"></i><strong>Samsung / Android</strong></span></label></div></div><div class="field full"><label>Language</label><div class="invite-choice-grid"><label class="invite-choice"><input type="radio" name="language" value="english" required><span><i class="fa-solid fa-language"></i><strong>English</strong></span></label><label class="invite-choice"><input type="radio" name="language" value="spanish" required><span><i class="fa-solid fa-language"></i><strong>Español</strong></span></label></div></div><div class="field full"><small>The message will include studio47hairsalon.com/admin, ${esc(profile.work_email)}, the temporary password “password”, and the matching setup image.</small></div></div><div class="modal-actions"><button type="button" class="ghost cancel">Cancel</button><button class="primary" type="submit"><i class="fa-solid fa-paper-plane"></i> Send login</button></div></form></div></div>`;
+
+  const close=()=>overlay.innerHTML='';
+  overlay.querySelector('.close').onclick=close;
+  overlay.querySelector('.cancel').onclick=close;
+  overlay.querySelector('.modal-bg').onclick=event=>{if(event.target===event.currentTarget)close()};
+
+  overlay.querySelector('#teamLoginSend').onsubmit=async event=>{
+    event.preventDefault();
+    const form=event.currentTarget,fd=new FormData(form),button=form.querySelector('.primary');
+    const phone=String(fd.get('phone')||'').trim(),device=String(fd.get('device')||''),language=String(fd.get('language')||'');
+    if(!phone||!device||!language)return alert('Enter the phone number, phone type, and language.');
+
+    button.disabled=true;
+    button.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Sending…';
+
+    const {data:result,error}=await db.functions.invoke('send-team-invite',{body:{team_member_id:member.id,phone,device,language}});
+
+    button.disabled=false;
+    button.innerHTML='<i class="fa-solid fa-paper-plane"></i> Send login';
+
+    if(error){
+      let message=error.message||'The login could not be sent.';
+      try{message=(await error.context?.json())?.message||message}catch{}
+      return alert(message);
+    }
+
+    overlay.innerHTML='';
+    toast(result?.message||'First login instructions sent');
+  };
+}
+
 function ownerTeamCompact(){
   compactPageHeading('Team');
 
-  const team = orderedTeam();
-  const profiles = data.staffProfiles || [];
+  const team=orderedTeam();
+  const profiles=data.staffProfiles||[];
 
-  document.querySelector('#view').innerHTML = `
+  document.querySelector('#view').innerHTML=`
     <section class="compact-page">
       <div class="compact-page-head">
         <div>
           <div class="eyebrow">Staff schedule</div>
           <h1>Team</h1>
-          <p>Tap a team member to see their schedule.</p>
+          <p>Manage schedules, logins, and first-time sign-in instructions.</p>
         </div>
-
         <div class="compact-head-actions">
-          <button
-            class="compact-icon-btn"
-            id="teamCompactAdd"
-            type="button"
-            aria-label="Add team member"
-          >
+          <button class="compact-icon-btn" id="teamCompactAdd" type="button" aria-label="Add team member">
             <i class="fa-solid fa-plus"></i>
           </button>
         </div>
       </div>
 
       <div class="team-compact-list">
-        ${
-          team.map(member => {
-            const profile = profiles.find(
-              item => item.team_member_id === member.id
-            );
-
-            const email =
-              profile?.work_email ||
-              profile?.recovery_email ||
-              member.email ||
-              'No linked email';
-
-            return `
-              <article
-                class="team-compact-card"
-                data-team-open="${member.id}"
-                tabindex="0"
-                role="button"
-              >
-                <div class="team-compact-identity">
-                  <strong>${esc(member.name || 'Team member')}</strong>
-                  <span>${esc(email)}</span>
-                </div>
-
-                <div class="compact-edit-actions">
-                  <button
-                    class="ghost"
-                    type="button"
-                    data-team-edit="${member.id}"
-                    aria-label="Edit ${esc(member.name || 'team member')}"
-                  >
-                    <i class="fa-solid fa-pen"></i>
-                  </button>
-
-                  <button
-                    class="danger"
-                    type="button"
-                    data-team-delete="${member.id}"
-                    aria-label="Delete ${esc(member.name || 'team member')}"
-                  >
-                    <i class="fa-solid fa-trash"></i>
-                  </button>
-                </div>
-              </article>
-            `;
-          }).join('') || '<div class="empty">No team members yet.</div>'
-        }
+        ${team.map(member=>{
+          const profile=profiles.find(item=>item.team_member_id===member.id);
+          const email=profile?.work_email||profile?.recovery_email||member.email||'No linked email';
+          return `
+            <article class="team-compact-card" data-team-open="${member.id}" tabindex="0" role="button">
+              <div class="team-compact-identity">
+                <strong>${esc(member.name||'Team member')}</strong>
+                <span>${esc(email)}</span>
+              </div>
+              <div class="compact-edit-actions">
+                <button class="ghost" type="button" data-team-edit="${member.id}" aria-label="Edit ${esc(member.name||'team member')}" title="Edit">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button class="ghost team-invite-button" type="button" data-team-invite="${member.id}" aria-label="Send first login to ${esc(member.name||'team member')}" title="Send first login" ${profile?.work_email?'':'disabled'}>
+                  <i class="fa-solid fa-paper-plane"></i>
+                </button>
+                <button class="danger" type="button" data-team-delete="${member.id}" aria-label="Delete ${esc(member.name||'team member')}" title="Delete">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </article>`;
+        }).join('')||'<div class="empty">No team members yet.</div>'}
       </div>
-    </section>
-  `;
+    </section>`;
 
-  document.querySelector('#teamCompactAdd').onclick = () => teamEditor();
+  document.querySelector('#teamCompactAdd').onclick=()=>teamEditor();
 
-  document.querySelectorAll('[data-team-open]').forEach(card => {
-    const member = team.find(
-      item => item.id === card.dataset.teamOpen
-    );
-
-    card.onclick = () => {
-      if(member) showTeamSchedule(member);
-    };
-
-    card.onkeydown = event => {
-      if(event.key === 'Enter' || event.key === ' '){
-        event.preventDefault();
-        if(member) showTeamSchedule(member);
-      }
-    };
+  document.querySelectorAll('[data-team-open]').forEach(card=>{
+    const member=team.find(item=>item.id===card.dataset.teamOpen);
+    card.onclick=()=>{if(member)showTeamSchedule(member)};
+    card.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();if(member)showTeamSchedule(member)}};
   });
 
-  document.querySelectorAll('[data-team-edit]').forEach(button => {
-    button.onclick = event => {
+  document.querySelectorAll('[data-team-edit]').forEach(button=>{
+    button.onclick=event=>{
       event.stopPropagation();
-
-      const member = team.find(
-        item => item.id === button.dataset.teamEdit
-      );
-
-      if(member) teamEditor(member);
+      const member=team.find(item=>item.id===button.dataset.teamEdit);
+      if(member)teamEditor(member);
     };
   });
 
-  document.querySelectorAll('[data-team-delete]').forEach(button => {
-    button.onclick = event => {
+  document.querySelectorAll('[data-team-invite]').forEach(button=>{
+    button.onclick=event=>{
+      event.stopPropagation();
+      const member=team.find(item=>item.id===button.dataset.teamInvite);
+      if(member)sendTeamLoginPopup(member);
+    };
+  });
+
+  document.querySelectorAll('[data-team-delete]').forEach(button=>{
+    button.onclick=event=>{
       event.stopPropagation();
       removeTeam(button.dataset.teamDelete);
     };
   });
 }
+
 function ownerGalleryCompact(){
   compactPageHeading('Gallery');const items=galleryInOrder();let imageIndex=0;
   document.querySelector('#view').innerHTML=`<section class="compact-page"><div class="compact-page-head"><div><div class="eyebrow">Website media</div><h1>Gallery</h1><p>${galleryCompactEditMode?'Reorder, edit, publish, or delete media.':'Tap an image to expand it.'}</p></div><div class="compact-head-actions"><button class="compact-icon-btn ${galleryCompactEditMode?'active':''}" id="galleryCompactEdit" type="button" aria-label="${galleryCompactEditMode?'Finish editing gallery':'Edit gallery'}"><i class="fa-solid ${galleryCompactEditMode?'fa-check':'fa-pen'}"></i></button><button class="compact-icon-btn" id="galleryCompactAdd" type="button" aria-label="Add gallery media"><i class="fa-solid fa-plus"></i></button><input id="galleryCompactFiles" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime,video/x-m4v" multiple hidden></div></div><small id="dropStatus"></small><div class="gallery-v28-grid">${items.map((item,index)=>{const video=isVideoMedia(item.image_url)||String(item.image_url||'').startsWith('data:video/'),expandIndex=video?-1:imageIndex++;return `<article class="gallery-v28-card">${video?`<video class="gallery-v28-media" src="${esc(item.image_url)}" controls playsinline preload="metadata"></video>`:`<img class="gallery-v28-media" src="${esc(item.image_url)}" alt="Gallery image ${expandIndex+1}" data-gallery-expand="${expandIndex}" tabindex="0">`}<div class="gallery-v28-meta"><span>#${index+1}</span><span>${video?'Video':'Image'}</span></div>${galleryCompactEditMode?`<div class="gallery-v28-actions"><button class="toggle ${item.is_live?'live':'draft'}" type="button" data-gallery-live="${item.id}" data-live="${item.is_live}">${item.is_live?'Live':'Not live'}</button><button class="ghost" type="button" data-gallery-move="${item.id}" data-direction="-1" aria-label="Move up" ${index===0?'disabled':''}><i class="fa-solid fa-arrow-up"></i></button><button class="ghost" type="button" data-gallery-move="${item.id}" data-direction="1" aria-label="Move down" ${index===items.length-1?'disabled':''}><i class="fa-solid fa-arrow-down"></i></button><button class="ghost" type="button" data-gallery-edit="${item.id}" aria-label="Edit"><i class="fa-solid fa-pen"></i></button><button class="danger" type="button" data-gallery-delete="${item.id}" aria-label="Delete"><i class="fa-solid fa-trash"></i></button></div>`:''}</article>`}).join('')||'<div class="empty">No gallery media yet.</div>'}</div></section>`;
