@@ -15,3 +15,13 @@
  .studio-cursor.is-pressed{width:8px;height:8px}
 }
 @media(prefers-reduced-motion:reduce){.studio-reveal,.gallery figure img{animation:none!important;transition:none!important;transform:none!important;filter:none!important}}
+
+/* Mobile: favor native touch scrolling and inexpensive opacity reveals. */
+@media(max-width:767px),(hover:none) and (pointer:coarse){
+ html{scroll-behavior:auto}
+ body{overscroll-behavior-y:auto}
+ .studio-reveal{filter:none!important;transform:translate3d(0,10px,0);transition:opacity .32s ease,transform .32s ease;transition-delay:0ms!important}
+ .studio-reveal.is-visible{transform:none}
+ .gallery figure img,.gallery figure:hover img{transform:none!important;transition:none!important}
+ #galleryGrid,#reviewGrid{-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+}
