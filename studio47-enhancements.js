@@ -2,19 +2,20 @@
 (()=>{
  'use strict';
  const motion=matchMedia('(prefers-reduced-motion: reduce)');
+ const compactMotion=matchMedia('(max-width: 767px), (hover: none) and (pointer: coarse)');
  const revealSelector='#services .service-card,#reviews .review-card,#gallery figure,#services .heading,#reviews .heading,.visitgrid > div,.hero-copy > .eyebrow,.hero-copy > h1,.hero-copy > p,.hero-copy > .actions,footer .foot > *';
  let revealObserver;
  if(!motion.matches&&'IntersectionObserver' in window){
    revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
      if(entry.isIntersecting){entry.target.classList.add('is-visible');revealObserver.unobserve(entry.target)}
-   }),{threshold:.12,rootMargin:'0px 0px -25px 0px'});
+   }),{threshold:compactMotion.matches?0:.12,rootMargin:compactMotion.matches?'0px 0px 120px 0px':'0px 0px -25px 0px'});
  }
  const reveal=()=>{
    if(!revealObserver)return;
    document.querySelectorAll(revealSelector).forEach((element,index)=>{
      if(element.dataset.revealReady)return;
      element.dataset.revealReady='1';
-     element.style.setProperty('--reveal-delay',((index%4)*85)+'ms');
+     element.style.setProperty('--reveal-delay',(compactMotion.matches?0:(index%4)*85)+'ms');
      element.classList.add('studio-reveal');
      revealObserver.observe(element);
    });
