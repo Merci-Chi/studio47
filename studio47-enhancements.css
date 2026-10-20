@@ -1,34 +1,9 @@
-/* Studio 47 — photographic service menu and refined motion */
-#services .service-grid{gap:18px}
-#services .service-card{
-  position:relative;isolation:isolate;display:flex;align-items:flex-end;
-  min-height:265px;padding:28px;overflow:hidden;border:1px solid rgba(255,255,255,.22);
-  border-radius:22px;background:#351929;color:#fff;
-  box-shadow:0 18px 38px rgba(50,6,31,.18);
-  transition:transform .5s cubic-bezier(.2,.7,.2,1),box-shadow .5s ease,border-color .3s ease;
-}
-#services .service-card::before{
-  content:"";position:absolute;z-index:-1;inset:0;
-  background:linear-gradient(180deg,rgba(22,8,18,.08) 7%,rgba(24,8,19,.65) 55%,rgba(17,4,13,.94) 100%);
-  pointer-events:none;
-}
-#services .service-card::after{z-index:2;width:5px;background:#f00086;transform:scaleY(.4);pointer-events:none}
-#services .service-photo{position:absolute;z-index:-2;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;transition:transform .9s cubic-bezier(.2,.7,.2,1),filter .5s ease;filter:saturate(.85)}
-#services .service-card:hover{transform:translateY(-6px);box-shadow:0 26px 48px rgba(50,6,31,.3);border-color:rgba(255,255,255,.55)}
-#services .service-card:hover .service-photo{transform:scale(1.09);filter:saturate(1.05)}
-#services .service-icon{display:none}
-#services .service-card-main{position:relative;z-index:1;flex:1;min-width:0;align-self:flex-end}
-#services .service-card h3,#services body.dark .service-card h3,body.dark #services .service-card h3{color:#fff;font-size:clamp(1.35rem,2vw,1.8rem);text-shadow:0 2px 12px rgba(0,0,0,.55)}
-#services .service-card p,#services body.dark .service-card p{color:#f7e8f1;line-height:1.45;text-shadow:0 1px 8px #0009}
-#services .service-card strong{position:relative;z-index:1;align-self:flex-start;flex:none;background:#fff;color:#bd006a;border:0;border-radius:99px;white-space:nowrap;font-size:.92rem;box-shadow:0 6px 25px #0003}
-body.dark #services .service-card{background:#351929}
-body.dark #services .service-card strong{background:#fff;color:#bd006a}
-@media(max-width:700px){#services .service-card{min-height:235px;padding:21px;gap:12px;flex-wrap:wrap}#services .service-card strong{order:-1;margin-left:auto}#services .service-card-main{flex-basis:100%}}
+/* Studio 47 — original service design with scroll and cursor motion. */
 /* Scroll reveals are opt-in so unsupported environments remain legible. */
 @media(prefers-reduced-motion:no-preference){
  .studio-reveal{opacity:0;transform:translate3d(0,28px,0);filter:blur(4px);transition:opacity .8s ease,transform .8s cubic-bezier(.16,1,.3,1),filter .8s ease;transition-delay:var(--reveal-delay,0ms)}
  .studio-reveal.is-visible{opacity:1;transform:none;filter:none}
- .studio-reveal.service-card:hover{transform:translateY(-6px)}
+
  .gallery figure img{transition:transform .9s cubic-bezier(.16,1,.3,1)}
  .gallery figure:hover img{transform:scale(1.06)}
 }
@@ -39,4 +14,4 @@ body.dark #services .service-card strong{background:#fff;color:#bd006a}
  .studio-cursor.is-clickable{width:12px;height:12px;background:var(--cursor-color,#d30b78)}
  .studio-cursor.is-pressed{width:8px;height:8px}
 }
-@media(prefers-reduced-motion:reduce){#services .service-card,#services .service-photo,.studio-reveal,.gallery figure img{animation:none!important;transition:none!important;transform:none!important;filter:none!important}}
+@media(prefers-reduced-motion:reduce){.studio-reveal,.gallery figure img{animation:none!important;transition:none!important;transform:none!important;filter:none!important}}
